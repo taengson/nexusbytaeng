@@ -1,5 +1,29 @@
 # Project NexusByTaeng Roadmap 🚀
 
+## 🚀 Quick Start
+
+### Prerequisites
+- Python 3.10+
+- A virtual environment (recommended)
+
+### Installation
+```bash
+# Create and activate virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# Install required dependencies
+pip install textual litellm
+```
+
+### Execution
+```bash
+# Run the application
+python3 -m src.main
+```
+
+---
+
 ## 1. Vision & Identity
 **Project Name**: `nexusbytaeng`  
 **Core Goal**: A professional-grade, AI-Network Hybrid Chat TUI that serves as a central hub for multiple AI agents and real-time network communication.  
