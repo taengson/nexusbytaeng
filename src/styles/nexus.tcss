@@ -1,5 +1,9 @@
 /* nexus.tcss - Professional Dark Theme for NexusByTaeng */
 
+.hidden {
+    display: none;
+}
+
 Screen {
     background: #111216;
     color: #e3e6ed;
@@ -22,13 +26,13 @@ Screen {
 #main-area {
     width: 1fr;
     height: 100%;
-    layout: horizontal;
+    align: center middle;
 }
 
-#content-area {
-    width: 1fr;
+#workspace-container {
+    width: 100%;
     height: 100%;
-    align: center middle;
+    layout: horizontal;
 }
 
 #global-project-panel {
@@ -36,6 +40,11 @@ Screen {
     height: 100%;
     background: #14161d;
     border-right: solid #2a2d3d;
+}
+
+#workspaces {
+    width: 1fr;
+    height: 100%;
 }
 
 #chat-panel {

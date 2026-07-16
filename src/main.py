@@ -19,13 +19,11 @@ class NexusApp(App):
 
     def compose(self):
         with Container(id="main-area"):
-            # Global Sidebar (Fixed)
-            yield ProjectTreePanel(id="global-project-panel")
+            yield HomeScreen(id="home-view")
             
-            # Main Content Area
-            with Container(id="content-area"):
-                yield HomeScreen(id="home-view")
-                yield TabbedContent(id="workspaces", classes="hidden")
+            with Container(id="workspace-container", classes="hidden"):
+                yield ProjectTreePanel(id="global-project-panel")
+                yield TabbedContent(id="workspaces")
         yield Footer()
 
     def on_mount(self):
@@ -33,14 +31,15 @@ class NexusApp(App):
 
     def action_go_home(self):
         self.query_one("#home-view").display = True
-        self.query_one("#workspaces").display = False
+        self.query_one("#workspace-container").display = False
 
     def enter_session(self, mode: str):
         self.query_one("#home-view").display = False
-        workspaces = self.query_one("#workspaces", TabbedContent)
-        workspaces.display = True
+        container = self.query_one("#workspace-container")
+        container.display = True
         
-        # Simple tab title
+        workspaces = self.query_one("#workspaces", TabbedContent)
+        
         tab_id = f"session-{workspaces.tab_count}"
         title = ConnectionMode.get_display_name(mode)
         
