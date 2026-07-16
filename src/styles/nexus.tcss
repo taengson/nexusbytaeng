@@ -155,6 +155,12 @@ Screen {
     text-style: italic;
 }
 
+#input-guide {
+    height: 1;
+    color: #64748b;
+    text-style: italic;
+}
+
 /* Mode-specific Input borders */
 .input-mode-local {
     border-top: tall #3b82f6 !important;
@@ -194,7 +200,70 @@ Screen {
 }
 
 
-/* --- HOME SCREEN STYLE --- */
+/* --- MODAL & SUGGESTION STYLE --- */
+#confirm-modal-container {
+    background: #1a1d26;
+    border: tall $primary;
+    padding: 2 4;
+    width: 50;
+    height: auto;
+    min-height: 12;
+    align: center middle;
+}
+
+#confirm-modal-title {
+    text-style: bold;
+    color: $primary;
+    text-align: center;
+    margin-bottom: 1;
+}
+
+#confirm-modal-text {
+    text-align: center;
+    margin-bottom: 2;
+}
+
+#confirm-modal-buttons {
+    layout: horizontal;
+    align: center middle;
+    height: auto;
+}
+
+#confirm-modal-buttons Button {
+    color: #ffffff !important;
+    border: tall #ffffff;
+    margin: 0 1;
+}
+
+#suggestion-panel {
+    background: #1e2030;
+    border: tall #313244;
+    color: #e3e6ed;
+    padding: 1;
+    width: 40;
+    height: auto;
+    max-height: 10;
+}
+
+/* --- INPUT ENGINE MODES --- */
+.input-engine-mode-normal {
+    border-top: tall #2a2d3d;
+}
+
+.input-engine-mode-shell {
+    border-top: tall #ef4444 !important; /* Red for danger/shell */
+    background: #2d1a1a;
+}
+
+.input-engine-mode-command {
+    border-top: tall #10b981 !important; /* Green for commands */
+    background: #1a2d26;
+}
+
+.input-engine-mode-suggestion {
+    border-top: tall #3b82f6 !important; /* Blue for suggestions */
+    background: #1a262d;
+}
 HomeScreen {
     align: center middle;
     background: #0d0e11;
@@ -399,6 +468,12 @@ SessionWorkspace {
     height: 1;
     margin-top: 1;
     color: $text-muted;
+    text-style: italic;
+}
+
+#input-guide {
+    height: 1;
+    color: #64748b;
     text-style: italic;
 }
 
