@@ -44,12 +44,6 @@ class InputArea(Container):
         if mode == InputMode.SHELL:
             input_field.placeholder = "🐚 Shell 모드: 명령어를 입력하세요 (exit로 종료)"
             status_bar.update("✅ Shell 모드 진입 완료")
-        elif mode == InputMode.COMMAND:
-            input_field.placeholder = "⌨️ 명령어 입력 중..."
-            status_bar.update("명령어 모드 활성")
-        elif mode == InputMode.SUGGESTION:
-            input_field.placeholder = "📂 경로 검색 중..."
-            status_bar.update("경로 제안 모드 활성")
         else:
             # Reset to ConnectionMode style
             display_name = ConnectionMode.get_display_name(self.current_mode)
@@ -58,22 +52,14 @@ class InputArea(Container):
             status_bar.update(f"현재 연결: {symbol} {display_name} | 대화 전송: Enter")
 
     def compose(self):
-        yield SuggestionPanel(id="suggestion-panel")
         yield Input(placeholder="메시지를 입력하세요...", id="input-field")
-        yield Static("! shell mode, / command, @ file", id="input-guide")
+        yield Static("! shell mode", id="input-guide")
         yield Static("현재 연결: 로컬 AI 연결", id="status-bar")
 
     def on_input_submitted(self, event: Input.Submitted):
         text = event.value
         if not text:
             return
-
-        suggestion_panel = self.query_one("#suggestion-panel", SuggestionPanel)
-        if not suggestion_panel.hidden:
-            selected = suggestion_panel.get_selected()
-            if selected:
-                text = selected.strip("/") if selected.startswith("/") else selected
-                suggestion_panel.hide()
 
         mode, result = self.dispatcher.dispatch(text)
         
@@ -94,11 +80,6 @@ class InputArea(Container):
             self.update_mode_visuals(InputMode.SHELL)
             self.query_one("#input-field", Input).value = ""
             self.post_message(InputResult(text=f"🐚 Shell Output:\n{result}", is_system=True, is_shell=True))
-        elif mode == InputMode.SUGGESTION:
-            # Suggestions are typically handled on_change, but if submitted:
-            self.update_input_mode_style(InputMode.SUGGESTION)
-            suggestions = result.split(",")
-            suggestion_panel.update_suggestions("Suggested Paths:", suggestions)
         else:
             self.update_input_mode_style(InputMode.NORMAL)
             self.update_mode_visuals(InputMode.NORMAL)
@@ -108,16 +89,7 @@ class InputArea(Container):
 
     def on_input_changed(self, event: Input.Changed):
         """Real-time suggestion trigger based on input prefix."""
-        text = event.value
-        suggestion_panel = self.query_one("#suggestion-panel", SuggestionPanel)
-        
-        if text.startswith("/") or text.startswith("@"):
-            guide, suggestions = self.dispatcher.get_suggestions(text)
-            if guide:
-                suggestion_panel.update_suggestions(guide, suggestions)
-                return
-        
-        suggestion_panel.hide()
+        pass
 
     def enter_shell_mode(self):
         self.dispatcher.mode = InputMode.SHELL

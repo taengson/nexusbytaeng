@@ -116,7 +116,6 @@ Screen {
     border-top: tall #2a2d3d;
     padding: 1 2;
     layout: vertical;
-    position: relative;
 }
 
 #input-row {
@@ -235,16 +234,6 @@ Screen {
     margin: 0 1;
 }
 
-#suggestion-panel {
-    background: #1e2030;
-    border: tall #313244;
-    color: #e3e6ed;
-    padding: 1;
-    width: 40;
-    height: auto;
-    max-height: 10;
-}
-
 /* --- INPUT ENGINE MODES --- */
 .input-engine-mode-normal {
     border-top: tall #2a2d3d;
@@ -253,16 +242,6 @@ Screen {
 .input-engine-mode-shell {
     border-top: tall #ef4444 !important; /* Red for danger/shell */
     background: #2d1a1a;
-}
-
-.input-engine-mode-command {
-    border-top: tall #10b981 !important; /* Green for commands */
-    background: #1a2d26;
-}
-
-.input-engine-mode-suggestion {
-    border-top: tall #3b82f6 !important; /* Blue for suggestions */
-    background: #1a262d;
 }
 HomeScreen {
     align: center middle;
@@ -432,7 +411,6 @@ SessionWorkspace {
     border-top: tall #2a2d3d;
     padding: 1 2;
     layout: vertical;
-    position: relative;
 }
 
 #input-row {
