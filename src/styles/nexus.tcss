@@ -22,112 +22,20 @@ Screen {
 #main-area {
     width: 1fr;
     height: 100%;
-    align: center middle;
-}
-
-.hidden {
-    display: none;
-}
-
-/* --- HOME SCREEN STYLE --- */
-HomeScreen {
-    align: center middle;
-    background: transparent;
-    width: auto;
-    height: auto;
-}
-
-#home-container {
-    width: 60;
-    height: auto;
-    padding: 2 4;
-    border: double $primary;
-    background: #16181f;
-    align: center middle;
-}
-
-#home-title {
-    text-align: center;
-    text-style: bold;
-    color: $primary;
-    margin-bottom: 1;
-}
-
-#home-subtitle {
-    text-align: center;
-    color: $text-muted;
-    margin-bottom: 2;
-}
-
-.menu-button {
-    width: 100%;
-    margin: 1 0;
-    height: 3;
-    content-align: center middle;
-}
-
-#btn-local {
-    background: #1d3557;
-    border: tall #457b9d;
-    color: #f1faee;
-}
-#btn-local:hover {
-    background: #457b9d;
-}
-
-#btn-network {
-    background: #134e5e;
-    border: tall #2f80ed;
-    color: #f1faee;
-}
-#btn-network:hover {
-    background: #2f80ed;
-}
-
-#btn-gemini {
-    background: #4a154b;
-    border: tall #8a2be2;
-    color: #ffffff;
-}
-#btn-gemini:hover {
-    background: #8a2be2;
-}
-
-#btn-opencode {
-    background: #e65c00;
-    border: tall #f9d423;
-    color: #ffffff;
-}
-#btn-opencode:hover {
-    background: #f9d423;
-}
-
-
-/* --- SESSION WORKSPACE STYLE --- */
-SessionWorkspace {
     layout: horizontal;
-    height: 1fr;
 }
-#project-panel {
+
+#content-area {
+    width: 1fr;
+    height: 100%;
+    align: center middle;
+}
+
+#global-project-panel {
     width: 30;
     height: 100%;
     background: #14161d;
     border-right: solid #2a2d3d;
-}
-
-#project-header {
-    height: 3;
-    padding: 1 2;
-    background: #1a1d26;
-    color: $text;
-    text-style: bold;
-    border-bottom: solid #2a2d3d;
-}
-
-#project-tree {
-    height: 1fr;
-    background: transparent;
-    border: none;
 }
 
 #chat-panel {

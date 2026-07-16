@@ -17,9 +17,6 @@ class SessionWorkspace(Container):
         self.current_mode = initial_mode
 
     def compose(self):
-        # Left side: Project tree explorer
-        yield ProjectTreePanel(id="project-panel")
-        
         # Right side: Chat workspace & Settings Input
         with Container(id="chat-panel"):
             yield VerticalScroll(id="message-list")

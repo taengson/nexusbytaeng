@@ -4,6 +4,7 @@ from textual.app import App
 from textual.widgets import TabbedContent, TabPane, Footer, Static
 from textual.containers import Container
 from src.widgets.session_workspace import SessionWorkspace
+from src.widgets.project_tree import ProjectTreePanel
 from src.core.state import ConnectionMode
 from src.screens.home_screen import HomeScreen
 
@@ -18,8 +19,13 @@ class NexusApp(App):
 
     def compose(self):
         with Container(id="main-area"):
-            yield HomeScreen(id="home-view")
-            yield TabbedContent(id="workspaces", classes="hidden")
+            # Global Sidebar (Fixed)
+            yield ProjectTreePanel(id="global-project-panel")
+            
+            # Main Content Area
+            with Container(id="content-area"):
+                yield HomeScreen(id="home-view")
+                yield TabbedContent(id="workspaces", classes="hidden")
         yield Footer()
 
     def on_mount(self):
