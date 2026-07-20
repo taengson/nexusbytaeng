@@ -70,7 +70,7 @@ Screen {
 }
 
 .msg-container.user-msg {
-    align-horizontal: right;
+    align-horizontal: left;
 }
 
 .msg-container.ai-msg {
@@ -84,12 +84,14 @@ Screen {
 .user-text {
     color: #f8fafc;
     text-style: bold;
-    width: auto;
+    width: 100%;
+    text-align: left;
 }
 
 .ai-text {
     color: #e2e8f0;
-    width: auto;
+    width: 100%;
+    text-align: left;
 }
 
 .sys-text {
@@ -364,7 +366,7 @@ SessionWorkspace {
 }
 
 .msg-container.user-msg {
-    align-horizontal: right;
+    align-horizontal: left;
 }
 
 .msg-container.ai-msg {
@@ -378,12 +380,14 @@ SessionWorkspace {
 .user-text {
     color: #f8fafc;
     text-style: bold;
-    width: auto;
+    width: 100%;
+    text-align: left;
 }
 
 .ai-text {
     color: #e2e8f0;
-    width: auto;
+    width: 100%;
+    text-align: left;
 }
 
 .sys-text {

@@ -10,10 +10,10 @@ from src.widgets.suggestions import SuggestionPanel
 
 class InputResult(Message):
     """Fired when an input action (Shell, Command, etc.) produces a result to be displayed."""
-    def __init__(self, text: str, is_system: bool = False, is_shell: bool = False):
+    def __init__(self, text: str, sender: str = "ai", is_shell: bool = False):
         super().__init__()
         self.text = text
-        self.is_system = is_system
+        self.sender = sender  # 'user', 'ai', 'system'
         self.is_shell = is_shell
 
 class InputArea(Container):
@@ -62,6 +62,8 @@ class InputArea(Container):
         if not text:
             return
 
+        # Capture current mode before dispatching to detect transitions
+        previous_mode = self.dispatcher.mode
         mode, result = self.dispatcher.dispatch(text)
         
         # Clear input immediately for all dispatched actions (Shell, Command, etc.)
@@ -79,20 +81,37 @@ class InputArea(Container):
             )
             return
 
-        if mode == InputMode.SHELL:
+        # Handle Shell Mode and Shell Exit
+        if previous_mode == InputMode.SHELL:
             if text.strip().lower() == "exit":
                 self.update_input_mode_style(InputMode.NORMAL)
                 self.update_mode_visuals(InputMode.NORMAL)
-                self.post_message(InputResult(text="🐚 Shell 모드에서 종료되었습니다.", is_system=True, is_shell=False))
-            else:
-                self.update_input_mode_style(InputMode.SHELL)
-                self.update_mode_visuals(InputMode.SHELL)
-                self.post_message(InputResult(text=f"🐚 Shell Output:\n{result}", is_system=True, is_shell=True))
-        else:
-            self.update_input_mode_style(InputMode.NORMAL)
-            self.update_mode_visuals(InputMode.NORMAL)
-            if result and result != text:
-                self.post_message(InputResult(text=result, is_system=False))
+                self.post_message(InputResult(text="🐚 Shell 모드에서 종료되었습니다.", sender="system", is_shell=False))
+                event.stop()
+                return
+            
+            # Handle other shell outputs
+            self.update_input_mode_style(InputMode.SHELL)
+            self.update_mode_visuals(InputMode.SHELL)
+            self.post_message(InputResult(text=f"🐚 Shell Output:\n{result}", sender="system", is_shell=True))
+            event.stop()
+            return
+
+        # Handle Normal Mode
+        self.update_input_mode_style(InputMode.NORMAL)
+        self.update_mode_visuals(InputMode.NORMAL)
+        
+        # Do not log user input if it's a system command (starts with '!')
+        if not text.startswith("!"):
+            self.post_message(InputResult(text=text, sender="user"))
+        
+        if result and result != text:
+            # If the dispatcher produced a distinct result, it's an AI response
+            self.post_message(InputResult(text=result, sender="ai"))
+        
+        # Prevent the event from bubbling up to SessionWorkspace to avoid duplicate handling
+        event.stop()
+
 
     def on_input_changed(self, event: Input.Changed):
         """Real-time suggestion trigger based on input prefix."""
@@ -102,7 +121,7 @@ class InputArea(Container):
         self.dispatcher.mode = InputMode.SHELL
         self.update_input_mode_style(InputMode.SHELL)
         self.update_mode_visuals(InputMode.SHELL)
-        self.post_message(InputResult(text="🐚 Shell 모드에 진입했습니다. (exit로 종료)", is_system=True, is_shell=False))
+        self.post_message(InputResult(text="🐚 Shell 모드에 진입했습니다. (exit로 종료)", sender="system", is_shell=False))
 
     def on_mount(self):
         # Setup initial design states based on default mode

@@ -34,12 +34,8 @@ class SessionWorkspace(Container):
 
     def on_input_result(self, message: InputResult):
         """Handles results from shell, commands, and suggestions routed via InputArea."""
-        if message.is_system:
-            # System notifications or shell output (sender="system")
-            self.add_system_message(message.text, is_shell=message.is_shell)
-        else:
-            # Actual AI responses only (sender="ai")
-            self.add_message("ai", message.text)
+        # The sender is now explicitly defined in InputResult
+        self.add_message(message.sender, message.text, is_shell=message.is_shell)
 
 
     def on_input_area_mode_changed(self, message: InputArea.ModeChanged):
@@ -54,17 +50,9 @@ class SessionWorkspace(Container):
 
     def on_input_submitted(self, event: Input.Submitted):
         """Triggers upon pressing Enter inside the message input."""
-        # This is now handled by InputArea.on_input_submitted internally, 
-        # but we keep this for user message bubbles.
-        input_field = event.input
-        text = input_field.value.strip()
-        
-        if not text:
-            return
-            
-        # Only append User chat bubble if it's not a system command
-        if not text.startswith("!"):
-            self.add_message("user", text)
+        # This is now fully handled by InputArea via global InputResult messages
+        # to ensure consistent ordering and prevent duplicate messages.
+        pass
 
         
         # Note: InputArea will handle the logic and post an InputResult message
