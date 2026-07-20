@@ -22,7 +22,9 @@ class MessageWidget(Container):
             self.add_class("ai-msg")
             yield Static(self.text, classes="message-bubble ai-bubble")
         else:
+            # System messages: No bubble
             self.add_class("msg-container")
             self.add_class("sys-msg")
-            bubble_class = "message-bubble shell-bubble" if self.is_shell else "message-bubble sys-bubble"
+            # Shell output is left-aligned, system notifications are center-aligned
+            bubble_class = "shell-text" if self.is_shell else "sys-text"
             yield Static(self.text, classes=bubble_class)

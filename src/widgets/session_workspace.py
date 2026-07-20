@@ -59,8 +59,10 @@ class SessionWorkspace(Container):
         if not text:
             return
             
-        # Append User chat bubble
-        self.add_message("user", text)
+        # Only append User chat bubble if it's not a system command
+        if not text.startswith("!"):
+            self.add_message("user", text)
+
         
         # Note: InputArea will handle the logic and post an InputResult message
         # if it's a command or shell execution.

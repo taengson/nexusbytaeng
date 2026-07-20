@@ -52,6 +52,7 @@ class InputArea(Container):
             status_bar.update(f"현재 연결: {symbol} {display_name} | 대화 전송: Enter")
 
     def compose(self):
+        self.id = "input-container"
         yield Input(placeholder="메시지를 입력하세요...", id="input-field")
         yield Static("! shell mode", id="input-guide")
         yield Static("현재 연결: 로컬 AI 연결", id="status-bar")
@@ -63,6 +64,9 @@ class InputArea(Container):
 
         mode, result = self.dispatcher.dispatch(text)
         
+        # Clear input immediately for all dispatched actions (Shell, Command, etc.)
+        self.query_one("#input-field", Input).value = ""
+
         if result == "SHELL_CONFIRMATION_REQUIRED":
             self.update_input_mode_style(InputMode.NORMAL)
             self.update_mode_visuals(InputMode.NORMAL)
@@ -76,14 +80,17 @@ class InputArea(Container):
             return
 
         if mode == InputMode.SHELL:
-            self.update_input_mode_style(InputMode.SHELL)
-            self.update_mode_visuals(InputMode.SHELL)
-            self.query_one("#input-field", Input).value = ""
-            self.post_message(InputResult(text=f"🐚 Shell Output:\n{result}", is_system=True, is_shell=True))
+            if text.strip().lower() == "exit":
+                self.update_input_mode_style(InputMode.NORMAL)
+                self.update_mode_visuals(InputMode.NORMAL)
+                self.post_message(InputResult(text="🐚 Shell 모드에서 종료되었습니다.", is_system=True, is_shell=False))
+            else:
+                self.update_input_mode_style(InputMode.SHELL)
+                self.update_mode_visuals(InputMode.SHELL)
+                self.post_message(InputResult(text=f"🐚 Shell Output:\n{result}", is_system=True, is_shell=True))
         else:
             self.update_input_mode_style(InputMode.NORMAL)
             self.update_mode_visuals(InputMode.NORMAL)
-            self.query_one("#input-field", Input).value = ""
             if result:
                 self.post_message(InputResult(text=result, is_system=False))
 
@@ -95,6 +102,7 @@ class InputArea(Container):
         self.dispatcher.mode = InputMode.SHELL
         self.update_input_mode_style(InputMode.SHELL)
         self.update_mode_visuals(InputMode.SHELL)
+        self.post_message(InputResult(text="🐚 Shell 모드에 진입했습니다. (exit로 종료)", is_system=True, is_shell=False))
 
     def on_mount(self):
         # Setup initial design states based on default mode

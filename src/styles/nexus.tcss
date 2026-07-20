@@ -98,15 +98,19 @@ Screen {
     color: #e2e8f0;
 }
 
-.sys-bubble {
-    background: #27251f;
-    border-top: tall #eab308;
+.sys-text {
+    text-align: center;
     color: #fef08a;
     text-style: italic;
-    text-align: center;
-    width: 90%;
+    width: 100%;
 }
 
+.shell-text {
+    text-align: left;
+    color: #e3e6ed;
+    width: 100%;
+    padding-left: 2;
+}
 
 
 
@@ -147,13 +151,13 @@ Screen {
 }
 
 /* --- INPUT ENGINE MODES --- */
-.input-engine-mode-normal {
+#input-container.input-engine-mode-normal {
     border-top: tall #2a2d3d;
 }
 
-.input-engine-mode-shell {
+#input-container.input-engine-mode-shell {
     border-top: tall #ef4444 !important; /* Red for danger/shell */
-    background: #2d1a1a;
+    background: #2d1a1a !important;
 }
 HomeScreen {
     align: center middle;
@@ -394,14 +398,18 @@ SessionWorkspace {
     color: #e2e8f0;
 }
 
-.sys-bubble {
-    background: #27251f;
-    border-top: tall #eab308;
+.sys-text {
+    text-align: center;
     color: #fef08a;
     text-style: italic;
-    text-align: center;
-    width: 90%;
+    width: 100%;
 }
 
+.shell-text {
+    text-align: left;
+    color: #e3e6ed;
+    width: 100%;
+    padding-left: 2;
+}
 
 
