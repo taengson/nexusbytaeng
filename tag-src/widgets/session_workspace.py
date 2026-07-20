@@ -6,7 +6,7 @@ from textual.containers import Container, VerticalScroll
 from textual.message import Message
 from src.widgets.project_tree import ProjectTreePanel
 from src.widgets.chat_elements import MessageWidget
-from src.widgets.input_area import InputArea, InputResult
+from src.widgets.input_area import InputArea
 from src.core.state import ConnectionMode
 
 class SessionWorkspace(Container):
@@ -32,16 +32,6 @@ class SessionWorkspace(Container):
             "왼쪽의 파일 트리를 통해 실제 폴더 구조를 탐색할 수 있습니다. "
         )
 
-    def on_input_result(self, message: InputResult):
-        """Handles results from shell, commands, and suggestions routed via InputArea."""
-        if message.is_system:
-            # System notifications or shell output (sender="system")
-            self.add_system_message(message.text, is_shell=message.is_shell)
-        else:
-            # Actual AI responses only (sender="ai")
-            self.add_message("ai", message.text)
-
-
     def on_input_area_mode_changed(self, message: InputArea.ModeChanged):
         """Reacts to connection switches from the InputArea settings."""
         self.current_mode = message.mode
@@ -51,24 +41,20 @@ class SessionWorkspace(Container):
         # Log system event
         self.add_system_message(f"🔔 연결 인스턴스가 {symbol} {display_name}(으)로 조절되었습니다.")
 
-
     def on_input_submitted(self, event: Input.Submitted):
         """Triggers upon pressing Enter inside the message input."""
-        # This is now handled by InputArea.on_input_submitted internally, 
-        # but we keep this for user message bubbles.
         input_field = event.input
         text = input_field.value.strip()
         
         if not text:
             return
             
-        # Only append User chat bubble if it's not a system command
-        if not text.startswith("!"):
-            self.add_message("user", text)
-
+        # Append User chat bubble
+        self.add_message("user", text)
+        input_field.value = ""
         
-        # Note: InputArea will handle the logic and post an InputResult message
-        # if it's a command or shell execution.
+        # Fire concurrent asynchronous worker to respond simulating latency
+        self.run_worker(self.generate_mock_response(text))
 
     async def generate_mock_response(self, user_text: str):
         """Asynchronously triggers simulated response cards."""
@@ -84,11 +70,11 @@ class SessionWorkspace(Container):
         response_text = mock_responses.get(self.current_mode, "시뮬레이션 데이터 수신 오류.")
         self.add_message("ai", response_text)
 
-    def add_message(self, sender: str, text: str, is_shell: bool = False):
+    def add_message(self, sender: str, text: str):
         """Mounts a message card and scrolls the viewport."""
         message_list = self.query_one("#message-list", VerticalScroll)
-        message_list.mount(MessageWidget(sender, text, is_shell=is_shell))
+        message_list.mount(MessageWidget(sender, text))
         message_list.scroll_end(animate=False)
 
-    def add_system_message(self, text: str, is_shell: bool = False):
-        self.add_message("system", text, is_shell=is_shell)
+    def add_system_message(self, text: str):
+        self.add_message("system", text)

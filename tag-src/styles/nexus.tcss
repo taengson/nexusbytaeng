@@ -26,6 +26,7 @@ Screen {
 #main-area {
     width: 1fr;
     height: 100%;
+    align: center middle;
 }
 
 #workspace-container {
@@ -44,7 +45,6 @@ Screen {
 #workspaces {
     width: 1fr;
     height: 100%;
-    min-height: 100%;
 }
 
 #chat-panel {
@@ -61,7 +61,7 @@ Screen {
     padding: 1 2;
 }
 
-/* Card-style Message Bubbles -> Minimal Text Layout */
+/* Card-style Message Bubbles */
 .msg-container {
     width: 100%;
     height: auto;
@@ -81,78 +81,120 @@ Screen {
     align-horizontal: center;
 }
 
-.user-text {
+.message-bubble {
+    max-width: 80%;
+    padding: 1 2;
+}
+
+.user-bubble {
+    background: #1e293b;
+    border-top: tall #3b82f6;
     color: #f8fafc;
-    text-style: bold;
-    width: auto;
 }
 
-.ai-text {
+.ai-bubble {
+    background: #1e1e24;
+    border-top: tall #6366f1;
     color: #e2e8f0;
-    width: auto;
 }
 
-.sys-text {
-    text-align: center;
+.sys-bubble {
+    background: #27251f;
+    border-top: tall #eab308;
     color: #fef08a;
     text-style: italic;
-    width: 100%;
-}
-
-.shell-text {
-    text-align: left;
-    color: #e3e6ed;
-    width: 100%;
-    padding-left: 2;
+    text-align: center;
+    width: 90%;
 }
 
 
-
-
-/* --- MODAL & SUGGESTION STYLE --- */
-#confirm-modal-container {
-    background: #1a1d26;
-    border: tall $primary;
-    padding: 2 4;
-    width: 50;
+/* --- INPUT AREA & QUICK SETTINGS STYLE --- */
+#input-container {
     height: auto;
-    min-height: 8;
-    align: center middle;
+    min-height: 5;
+    background: #16181f;
+    border-top: tall #2a2d3d;
+    padding: 1 2;
+    layout: vertical;
+    position: relative;
 }
 
-#confirm-modal-title {
+#input-row {
+    layout: horizontal;
+    height: 3;
+}
+
+#input-field {
+    width: 1fr;
+    background: #1e2030;
+    color: #e3e6ed;
+    border: tall #313244;
+}
+
+#input-field:focus {
+    border: tall $primary;
+}
+
+#settings-btn {
+    width: 6;
+    height: 3;
+    margin-left: 1;
+    background: #313244;
+    border: tall #45475a;
+    content-align: center middle;
+}
+
+#settings-btn:hover {
+    background: #45475a;
+}
+
+#status-bar {
+    height: 1;
+    margin-top: 1;
+    color: $text-muted;
+    text-style: italic;
+}
+
+/* Mode-specific Input borders */
+.input-mode-local {
+    border-top: tall #3b82f6 !important;
+}
+.input-mode-network {
+    border-top: tall #10b981 !important;
+}
+.input-mode-gemini {
+    border-top: tall #8b5cf6 !important;
+}
+.input-mode-opencode {
+    border-top: tall #f97316 !important;
+}
+
+
+/* --- QUICK SETTINGS OVERLAY --- */
+#quick-settings-panel {
+    display: none; /* Controlled programmatically via class/style */
+}
+
+#quick-settings-panel.visible {
+    display: block;
+}
+
+#qs-title {
     text-style: bold;
     color: $primary;
-    text-align: center;
     margin-bottom: 1;
+    border-bottom: solid #313244;
+    padding-bottom: 1;
 }
 
-#confirm-modal-text {
-    text-align: center;
-    margin-bottom: 2;
+.qs-option-btn {
+    width: 100%;
+    margin: 1 0;
+    height: 3;
 }
 
-#confirm-modal-buttons {
-    layout: horizontal;
-    align: center middle;
-    height: auto;
-}
 
-#confirm-modal-buttons Button {
-    color: #ffffff !important;
-    border: tall #ffffff;
-    margin: 0 1;
-}
-
-/* --- INPUT ENGINE MODES --- */
-#input-container.input-engine-mode-normal {
-    border-top: tall #2a2d3d;
-}
-
-#input-container.input-engine-mode-shell {
-    border-top: tall #ef4444 !important; /* Red for danger/shell */
-    background: #2d1a1a !important;
-}
+/* --- HOME SCREEN STYLE --- */
 HomeScreen {
     align: center middle;
     background: #0d0e11;
@@ -225,95 +267,6 @@ HomeScreen {
 }
 
 
-/* --- INPUT AREA & QUICK SETTINGS STYLE --- */
-#input-container {
-    height: auto;
-    min-height: 3;
-    background: #16181f;
-    border-top: tall #2a2d3d;
-    padding: 0 2;
-    layout: vertical;
-}
-
-#input-row {
-    layout: horizontal;
-    height: 3;
-}
-
-#input-field {
-    width: 1fr;
-    background: #1e2030;
-    color: #e3e6ed;
-    border: tall #313244;
-}
-
-#input-field:focus {
-    border: tall $primary;
-}
-
-#settings-btn {
-    width: 6;
-    height: 3;
-    margin-left: 1;
-    background: #313244;
-    border: tall #45475a;
-    content-align: center middle;
-}
-
-#settings-btn:hover {
-    background: #45475a;
-}
-
-#status-bar {
-    height: 1;
-    margin-top: 1;
-    color: $text-muted;
-    text-style: italic;
-}
-
-#input-guide {
-    height: 1;
-    color: #64748b;
-    text-style: italic;
-}
-
-/* Mode-specific Input borders */
-.input-mode-local {
-    border-top: tall #3b82f6 !important;
-}
-.input-mode-network {
-    border-top: tall #10b981 !important;
-}
-.input-mode-gemini {
-    border-top: tall #8b5cf6 !important;
-}
-.input-mode-opencode {
-    border-top: tall #f97316 !important;
-}
-
-/* --- QUICK SETTINGS OVERLAY --- */
-#quick-settings-panel {
-    display: none;
-}
-
-#quick-settings-panel.visible {
-    display: block;
-}
-
-#qs-title {
-    text-style: bold;
-    color: $primary;
-    margin-bottom: 1;
-    border-bottom: solid #313244;
-    padding-bottom: 1;
-}
-
-.qs-option-btn {
-    width: 100%;
-    margin: 1 0;
-    height: 3;
-}
-
 /* --- SESSION WORKSPACE STYLE --- */
 SessionWorkspace {
     layout: horizontal;
@@ -355,7 +308,7 @@ SessionWorkspace {
     padding: 1 2;
 }
 
-/* Card-style Message Bubbles -> Minimal Text Layout */
+/* Card-style Message Bubbles */
 .msg-container {
     width: 100%;
     height: auto;
@@ -375,29 +328,114 @@ SessionWorkspace {
     align-horizontal: center;
 }
 
-.user-text {
+.message-bubble {
+    max-width: 80%;
+    padding: 1 2;
+}
+
+.user-bubble {
+    background: #1e293b;
+    border-top: tall #3b82f6;
     color: #f8fafc;
-    text-style: bold;
-    width: auto;
 }
 
-.ai-text {
+.ai-bubble {
+    background: #1e1e24;
+    border-top: tall #6366f1;
     color: #e2e8f0;
-    width: auto;
 }
 
-.sys-text {
-    text-align: center;
+.sys-bubble {
+    background: #27251f;
+    border-top: tall #eab308;
     color: #fef08a;
     text-style: italic;
-    width: 100%;
+    text-align: center;
+    width: 90%;
 }
 
-.shell-text {
-    text-align: left;
+
+/* --- INPUT AREA & QUICK SETTINGS STYLE --- */
+#input-container {
+    height: auto;
+    min-height: 5;
+    background: #16181f;
+    border-top: tall #2a2d3d;
+    padding: 1 2;
+    layout: vertical;
+    position: relative;
+}
+
+#input-row {
+    layout: horizontal;
+    height: 3;
+}
+
+#input-field {
+    width: 1fr;
+    background: #1e2030;
     color: #e3e6ed;
-    width: 100%;
-    padding-left: 2;
+    border: tall #313244;
+}
+
+#input-field:focus {
+    border: tall $primary;
+}
+
+#settings-btn {
+    width: 6;
+    height: 3;
+    margin-left: 1;
+    background: #313244;
+    border: tall #45475a;
+    content-align: center middle;
+}
+
+#settings-btn:hover {
+    background: #45475a;
+}
+
+#status-bar {
+    height: 1;
+    margin-top: 1;
+    color: $text-muted;
+    text-style: italic;
+}
+
+/* Mode-specific Input borders */
+.input-mode-local {
+    border-top: tall #3b82f6 !important;
+}
+.input-mode-network {
+    border-top: tall #10b981 !important;
+}
+.input-mode-gemini {
+    border-top: tall #8b5cf6 !important;
+}
+.input-mode-opencode {
+    border-top: tall #f97316 !important;
 }
 
 
+/* --- QUICK SETTINGS OVERLAY --- */
+#quick-settings-panel {
+    display: none; /* Controlled programmatically via class/style */
+}
+
+#quick-settings-panel.visible {
+    display: block;
+}
+
+#qs-title {
+    text-style: bold;
+    color: $primary;
+    margin-bottom: 1;
+    border-bottom: solid #313244;
+    padding-bottom: 1;
+}
+
+.qs-option-btn {
+    width: 100%;
+    margin: 1 0;
+    height: 3;
+}

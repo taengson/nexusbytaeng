@@ -91,7 +91,7 @@ class InputArea(Container):
         else:
             self.update_input_mode_style(InputMode.NORMAL)
             self.update_mode_visuals(InputMode.NORMAL)
-            if result:
+            if result and result != text:
                 self.post_message(InputResult(text=result, is_system=False))
 
     def on_input_changed(self, event: Input.Changed):
