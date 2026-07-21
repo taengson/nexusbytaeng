@@ -9,6 +9,8 @@ from src.widgets.chat_elements import MessageWidget
 from src.widgets.input_area import InputArea, InputResult
 from src.core.state import ConnectionMode
 from src.core.agent_process import AgentProcessManager
+from src.core.pty_process import TtyProcessManager
+from src.core.stream_parser import StreamParser
 from src.core.logger import ChatLogManager
 
 class SessionWorkspace(Container):
@@ -19,13 +21,18 @@ class SessionWorkspace(Container):
         self.current_mode = initial_mode
         self.agent_manager = None
         self.logger = ChatLogManager()
-        
+        self.parser = StreamParser()
     def _handle_agent_output(self, text: str):
         # We need to call add_message which is on the UI thread
         # Textual messages are thread-safe, but let's be careful
-        print(f"[DEBUG] SessionWorkspace: _handle_agent_output received: {text}")
-        self.logger.log_event("ai", "AI", text)
-        self.app.call_from_thread(self.add_message, "ai", text)
+        
+        # Parse and clean the incoming stream text
+        messages = self.parser.process_chunk(text)
+        
+        for msg in messages:
+            print(f"[DEBUG] SessionWorkspace: UI update with msg: {msg}")
+            self.logger.log_event("ai", "AI", msg)
+            self.app.call_from_thread(self.add_message, "ai", msg)
 
     def compose(self):
         # Right side: Chat workspace & Settings Input
@@ -45,7 +52,8 @@ class SessionWorkspace(Container):
         )
         
         if self.current_mode == ConnectionMode.HERMES:
-            self.agent_manager = AgentProcessManager("hermes chat", self._handle_agent_output)
+            # Use TtyProcessManager instead of AgentProcessManager for proper TTY support
+            self.agent_manager = TtyProcessManager("hermes chat", self._handle_agent_output)
             await self.agent_manager.start()
 
     def on_input_result(self, message: InputResult):
