@@ -8,6 +8,8 @@ from src.widgets.project_tree import ProjectTreePanel
 from src.widgets.chat_elements import MessageWidget
 from src.widgets.input_area import InputArea, InputResult
 from src.core.state import ConnectionMode
+from src.core.agent_process import AgentProcessManager
+from src.core.logger import ChatLogManager
 
 class SessionWorkspace(Container):
     """The workspace session widget, intended for mounting in tabs."""
@@ -15,6 +17,15 @@ class SessionWorkspace(Container):
     def __init__(self, initial_mode: str = ConnectionMode.LOCAL, **kwargs):
         super().__init__(**kwargs)
         self.current_mode = initial_mode
+        self.agent_manager = None
+        self.logger = ChatLogManager()
+        
+    def _handle_agent_output(self, text: str):
+        # We need to call add_message which is on the UI thread
+        # Textual messages are thread-safe, but let's be careful
+        print(f"[DEBUG] SessionWorkspace: _handle_agent_output received: {text}")
+        self.logger.log_event("ai", "AI", text)
+        self.app.call_from_thread(self.add_message, "ai", text)
 
     def compose(self):
         # Right side: Chat workspace & Settings Input
@@ -22,8 +33,9 @@ class SessionWorkspace(Container):
             yield VerticalScroll(id="message-list")
             yield InputArea(initial_mode=self.current_mode)
 
-    def on_mount(self):
+    async def on_mount(self):
         # Emit session initial status logs
+        self.logger.start_session()
         display_name = ConnectionMode.get_display_name(self.current_mode)
         _, _, symbol = ConnectionMode.get_theme_color(self.current_mode)
         
@@ -31,11 +43,24 @@ class SessionWorkspace(Container):
         self.add_system_message(
             "왼쪽의 파일 트리를 통해 실제 폴더 구조를 탐색할 수 있습니다. "
         )
+        
+        if self.current_mode == ConnectionMode.HERMES:
+            self.agent_manager = AgentProcessManager("hermes chat", self._handle_agent_output)
+            await self.agent_manager.start()
 
     def on_input_result(self, message: InputResult):
         """Handles results from shell, commands, and suggestions routed via InputArea."""
-        # The sender is now explicitly defined in InputResult
-        self.add_message(message.sender, message.text, is_shell=message.is_shell)
+        if self.current_mode == ConnectionMode.HERMES and message.sender == "user":
+            self.add_message(message.sender, message.text)
+            self.logger.log_event("user", "나", message.text)
+            if self.agent_manager:
+                asyncio.create_task(self.agent_manager.send(message.text))
+        else:
+            self.add_message(message.sender, message.text, is_shell=message.is_shell)
+            category = "shell" if message.is_shell else "user"
+            role = "Shell" if message.is_shell else "나"
+            self.logger.log_event(category, role, message.text)
+
 
 
     def on_input_area_mode_changed(self, message: InputArea.ModeChanged):
@@ -79,4 +104,5 @@ class SessionWorkspace(Container):
         message_list.scroll_end(animate=False)
 
     def add_system_message(self, text: str, is_shell: bool = False):
+        self.logger.log_event("system", "[System]", text)
         self.add_message("system", text, is_shell=is_shell)

@@ -226,6 +226,15 @@ HomeScreen {
     background: #f9d423;
 }
 
+#btn-hermes {
+    background: #facc15; /* Bright yellow */
+    border: tall #eab308;
+    color: #000000;      /* Black text for better contrast */
+}
+#btn-hermes:hover {
+    background: #eab308;
+}
+
 
 /* --- INPUT AREA & QUICK SETTINGS STYLE --- */
 #input-container {
