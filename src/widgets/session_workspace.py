@@ -9,7 +9,6 @@ from src.widgets.chat_elements import MessageWidget
 from src.widgets.input_area import InputArea, InputResult
 from src.core.state import ConnectionMode
 from src.core.agent_process import AgentProcessManager
-from src.core.pty_process import TtyProcessManager
 from src.core.stream_parser import StreamParser
 from src.core.logger import ChatLogManager
 
@@ -23,16 +22,31 @@ class SessionWorkspace(Container):
         self.logger = ChatLogManager()
         self.parser = StreamParser()
     def _handle_agent_output(self, text: str):
-        # We need to call add_message which is on the UI thread
-        # Textual messages are thread-safe, but let's be careful
-        
         # Parse and clean the incoming stream text
         messages = self.parser.process_chunk(text)
         
         for msg in messages:
-            print(f"[DEBUG] SessionWorkspace: UI update with msg: {msg}")
             self.logger.log_event("ai", "AI", msg)
-            self.app.call_from_thread(self.add_message, "ai", msg)
+            self.app.call_from_thread(self.update_last_ai_message, msg)
+
+    def update_last_ai_message(self, text: str):
+        """Appends text to the most recent AI message widget to support streaming."""
+        message_list = self.query_one("#message-list", VerticalScroll)
+        widgets = message_list.children
+        
+        # Find the last MessageWidget that was sent by 'ai'
+        last_ai_widget = None
+        for w in reversed(widgets):
+            if isinstance(w, MessageWidget) and w.sender == "ai":
+                last_ai_widget = w
+                break
+        
+        if last_ai_widget:
+            # Append text to the existing widget's content
+            last_ai_widget.append_text(text + " ")
+        else:
+            # If no AI widget exists yet, create one
+            self.add_message("ai", text)
 
     def compose(self):
         # Right side: Chat workspace & Settings Input
@@ -52,8 +66,8 @@ class SessionWorkspace(Container):
         )
         
         if self.current_mode == ConnectionMode.HERMES:
-            # Use TtyProcessManager instead of AgentProcessManager for proper TTY support
-            self.agent_manager = TtyProcessManager("hermes chat", self._handle_agent_output)
+            # Use AgentProcessManager for pipe-based communication
+            self.agent_manager = AgentProcessManager("hermes chat", self._handle_agent_output)
             await self.agent_manager.start()
 
     def on_input_result(self, message: InputResult):

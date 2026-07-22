@@ -23,8 +23,7 @@ class AgentProcessManager:
                 chunk = await stream.read(1024)
                 if not chunk:
                     break
-                text = chunk.decode().strip()
-                print(f"[DEBUG] AgentProcessManager: Raw chunk received, decoded text: {text}")
+                text = chunk.decode()
                 self.callback(text)
             except Exception as e:
                 print(f"[DEBUG] AgentProcessManager: Error reading stream: {e}")

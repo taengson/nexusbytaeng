@@ -1,2 +1,6 @@
 examples/
 venv/
+tag-src/
+logs/
+session-log.md
+__pycache__/
