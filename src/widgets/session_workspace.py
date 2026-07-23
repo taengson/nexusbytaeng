@@ -8,7 +8,9 @@ from src.widgets.project_tree import ProjectTreePanel
 from src.widgets.chat_elements import MessageWidget
 from src.widgets.input_area import InputArea, InputResult
 from src.core.state import ConnectionMode
+from typing import Dict, Any
 from src.core.agent_process import AgentProcessManager
+from src.core.acp import ACPClient
 from src.core.stream_parser import StreamParser
 from src.core.logger import ChatLogManager
 
@@ -19,6 +21,7 @@ class SessionWorkspace(Container):
         super().__init__(**kwargs)
         self.current_mode = initial_mode
         self.agent_manager = None
+        self.acp_client = None
         self.logger = ChatLogManager()
         self.parser = StreamParser()
     def _handle_agent_output(self, text: str):
@@ -69,6 +72,75 @@ class SessionWorkspace(Container):
             # Use AgentProcessManager for pipe-based communication
             self.agent_manager = AgentProcessManager("hermes chat", self._handle_agent_output)
             await self.agent_manager.start()
+        elif self.current_mode == ConnectionMode.HERMES_ACP:
+            # Use ACPClient for structured JSON-RPC communication
+            self.input_area = self.query_one(InputArea)
+            self.input_area.can_focus = False
+            self.add_system_message("🔄 ACP 연결 중...")
+            
+            try:
+                self.acp_client = ACPClient(
+                    command=["hermes", "acp"], 
+                    on_message=self._handle_acp_message,
+                    app_context=self.app
+                )
+                await self.acp_client.start()
+                
+                # Now send_request waits for response
+                await self.acp_client.initialize()
+                resp = await self.acp_client.create_session(cwd=".")
+                
+                if resp and "result" in resp:
+                    session_id = resp["result"].get("sessionId") or resp["result"].get("session_id")
+                    if session_id:
+                        self.acp_client.set_session_id(session_id)
+                        self.add_system_message(f"✅ ACP 연결됨 (session: {session_id})")
+                        self.input_area.can_focus = True
+                    else:
+                        self.add_system_message("⚠️ ACP 세션 ID를 찾을 수 없습니다.")
+                else:
+                    self.add_system_message("⚠️ ACP 세션 생성 응답이 비정상적입니다.")
+                
+            except Exception as e:
+                self.add_system_message(f"❌ ACP 연결 실패: {e}\n홈 화면으로 돌아가거나 앱을 종료하십시오.")
+            # Removed finally: self.input_area.can_focus = True to keep it disabled on failure
+
+    def _handle_acp_message(self, data: Dict[str, Any]):
+        """Handles JSON-RPC messages from ACPClient."""
+        # 1. Handle Responses (Requests with ID)
+        if data.get("type") == "response":
+            resp = data.get("data", {})
+            if resp.get("result") and "sessionId" in resp["result"]:
+                self.acp_client.set_session_id(resp["result"]["sessionId"])
+                self.add_system_message(f"✅ ACP 세션 활성화됨 (ID: {resp['result']['sessionId']})")
+            elif resp.get("error"):
+                self.add_system_message(f"⚠️ ACP 에러: {resp['error'].get('message', 'Unknown error')}")
+            return
+
+        # 2. Handle Notifications (e.g., session/update)
+        method = data.get("method")
+        params = data.get("params", {})
+
+        if method == "session/update":
+            # hermes acp는 sessionUpdate가 params["update"] 안에 둠
+            update = params.get("update") or params
+            update_type = update.get("sessionUpdate")
+            content = update.get("content", {})
+            
+            if update_type == "agent_message_chunk":
+                text = content.get("text", "")
+                self.update_last_ai_message(text)
+            elif update_type == "agent_thought_chunk":
+                thought = content.get("text", "")
+                self.update_last_ai_message(f"💭 {thought}")
+            elif update_type == "tool_call":
+                self.add_system_message(f"🛠 Tool: {update.get('name')}")
+            elif update_type == "tool_call_update":
+                self.add_system_message(f"🛠 Result: {update.get('result')}")
+        else:
+            # Generic log for other notifications
+            self.logger.log_event("system", "ACP", f"Notification {method}: {params}")
+
 
     def on_input_result(self, message: InputResult):
         """Handles results from shell, commands, and suggestions routed via InputArea."""
@@ -77,11 +149,17 @@ class SessionWorkspace(Container):
             self.logger.log_event("user", "나", message.text)
             if self.agent_manager:
                 asyncio.create_task(self.agent_manager.send(message.text))
+        elif self.current_mode == ConnectionMode.HERMES_ACP and message.sender == "user":
+            self.add_message(message.sender, message.text)
+            self.logger.log_event("user", "나", message.text)
+            if self.acp_client:
+                asyncio.create_task(self.acp_client.prompt(message.text))
         else:
             self.add_message(message.sender, message.text, is_shell=message.is_shell)
             category = "shell" if message.is_shell else "user"
             role = "Shell" if message.is_shell else "나"
             self.logger.log_event(category, role, message.text)
+
 
 
 
