@@ -1,5 +1,6 @@
 import asyncio
 import sys
+import os
 
 class AgentProcessManager:
     def __init__(self, command: str, callback):
@@ -8,11 +9,13 @@ class AgentProcessManager:
         self.process = None
 
     async def start(self):
+        env = {**os.environ, "PYTHONUNBUFFERED": "1"}
         self.process = await asyncio.create_subprocess_shell(
             self.command,
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
+            env=env,
         )
         asyncio.create_task(self._read_stream(self.process.stdout))
         asyncio.create_task(self._read_stream(self.process.stderr))
@@ -25,8 +28,7 @@ class AgentProcessManager:
                     break
                 text = chunk.decode()
                 self.callback(text)
-            except Exception as e:
-                print(f"[DEBUG] AgentProcessManager: Error reading stream: {e}")
+            except Exception:
                 break
 
     async def send(self, text: str):

@@ -24,6 +24,9 @@ class SessionWorkspace(Container):
         self.acp_client = None
         self.logger = ChatLogManager()
         self.parser = StreamParser()
+        self._active_ai_widget = None
+        self._current_response_buffer = ""
+        self._logging_timer = None
     def _handle_agent_output(self, text: str):
         # Parse and clean the incoming stream text
         messages = self.parser.process_chunk(text)
@@ -32,29 +35,26 @@ class SessionWorkspace(Container):
             self.logger.log_event("ai", "AI", msg)
             self.app.call_from_thread(self.update_last_ai_message, msg)
 
-    def update_last_ai_message(self, text: str):
-        """Appends text to the most recent AI message widget to support streaming."""
-        message_list = self.query_one("#message-list", VerticalScroll)
-        widgets = message_list.children
-        
-        # Find the last MessageWidget that was sent by 'ai'
-        last_ai_widget = None
-        for w in reversed(widgets):
-            if isinstance(w, MessageWidget) and w.sender == "ai":
-                last_ai_widget = w
-                break
-        
-        if last_ai_widget:
-            # Append text to the existing widget's content
-            last_ai_widget.append_text(text + " ")
+    def update_last_ai_message(self, text: str, sender: str = "ai"):
+        """Appends text to the active AI message widget to support streaming."""
+        if self._active_ai_widget:
+            self._active_ai_widget.append_text(text + " ")
         else:
-            # If no AI widget exists yet, create one
-            self.add_message("ai", text)
+            # Create a new message widget and track it
+            self.add_message(sender, text)
+            # Find the widget we just added to set as active
+            message_list = self.query_one("#message-list", VerticalScroll)
+            for w in reversed(message_list.children):
+                if isinstance(w, MessageWidget) and w.sender == sender:
+                    self._active_ai_widget = w
+                    break
 
     def compose(self):
         # Right side: Chat workspace & Settings Input
         with Container(id="chat-panel"):
             yield VerticalScroll(id="message-list")
+            # Status bar for ACP connection state
+            yield Static(" ", id="acp-status-bar", classes="status-bar")
             yield InputArea(initial_mode=self.current_mode)
 
     async def on_mount(self):
@@ -68,14 +68,11 @@ class SessionWorkspace(Container):
             "왼쪽의 파일 트리를 통해 실제 폴더 구조를 탐색할 수 있습니다. "
         )
         
-        if self.current_mode == ConnectionMode.HERMES:
-            # Use AgentProcessManager for pipe-based communication
-            self.agent_manager = AgentProcessManager("hermes chat", self._handle_agent_output)
-            await self.agent_manager.start()
-        elif self.current_mode == ConnectionMode.HERMES_ACP:
+        if self.current_mode == ConnectionMode.HERMES_ACP:
             # Use ACPClient for structured JSON-RPC communication
             self.input_area = self.query_one(InputArea)
             self.input_area.can_focus = False
+            self.set_acp_status("⚡ ACP 핸드셰이크 진행 중... (잠시만 기다려 주세요)", "#94a3b8")
             self.add_system_message("🔄 ACP 연결 중...")
             
             try:
@@ -94,19 +91,34 @@ class SessionWorkspace(Container):
                     session_id = resp["result"].get("sessionId") or resp["result"].get("session_id")
                     if session_id:
                         self.acp_client.set_session_id(session_id)
+                        self.set_acp_status(f"✅ ACP 연결됨 (ID: {session_id})", "#10b981")
                         self.add_system_message(f"✅ ACP 연결됨 (session: {session_id})")
                         self.input_area.can_focus = True
                     else:
+                        self.set_acp_status("⚠️ ACP 세션 ID를 찾을 수 없습니다.", "#ef4444")
                         self.add_system_message("⚠️ ACP 세션 ID를 찾을 수 없습니다.")
                 else:
+                    self.set_acp_status("⚠️ ACP 응답 비정상", "#ef4444")
                     self.add_system_message("⚠️ ACP 세션 생성 응답이 비정상적입니다.")
                 
             except Exception as e:
+                self.set_acp_status(f"❌ ACP 연결 실패: {e}", "#ef4444")
                 self.add_system_message(f"❌ ACP 연결 실패: {e}\n홈 화면으로 돌아가거나 앱을 종료하십시오.")
             # Removed finally: self.input_area.can_focus = True to keep it disabled on failure
 
+    def _finalize_ai_logging(self):
+        """Logs the accumulated response buffer to the chat log."""
+        if self._current_response_buffer:
+            self.logger.log_event("ai", "AI", self._current_response_buffer)
+            self._current_response_buffer = ""
+        self._logging_timer = None
+
     def _handle_acp_message(self, data: Dict[str, Any]):
         """Handles JSON-RPC messages from ACPClient."""
+        # Reset logging timer on any update
+        if self._logging_timer:
+            self._logging_timer.cancel()
+
         # 1. Handle Responses (Requests with ID)
         if data.get("type") == "response":
             resp = data.get("data", {})
@@ -116,7 +128,7 @@ class SessionWorkspace(Container):
             elif resp.get("error"):
                 self.add_system_message(f"⚠️ ACP 에러: {resp['error'].get('message', 'Unknown error')}")
             return
-
+        
         # 2. Handle Notifications (e.g., session/update)
         method = data.get("method")
         params = data.get("params", {})
@@ -129,12 +141,18 @@ class SessionWorkspace(Container):
             
             if update_type == "agent_message_chunk":
                 text = content.get("text", "")
-                self.update_last_ai_message(text)
+                self.update_last_ai_message(text, sender="ai")
+                self._current_response_buffer += text
+                # Set timer to log full response after 2 seconds of silence
+                self._logging_timer = self.app.call_later(2.0, self._finalize_ai_logging)
             elif update_type == "agent_thought_chunk":
                 thought = content.get("text", "")
-                self.update_last_ai_message(f"💭 {thought}")
+                # Separate thought from response: reset active widget to start a new 'thought' block
+                self._active_ai_widget = None 
+                self.update_last_ai_message(thought, sender="thought")
             elif update_type == "tool_call":
-                self.add_system_message(f"🛠 Tool: {update.get('name')}")
+                tool_name = update.get('name') or update.get('toolName') or "Unknown Tool"
+                self.add_system_message(f"🛠 Tool: {tool_name}")
             elif update_type == "tool_call_update":
                 self.add_system_message(f"🛠 Result: {update.get('result')}")
         else:
@@ -144,12 +162,11 @@ class SessionWorkspace(Container):
 
     def on_input_result(self, message: InputResult):
         """Handles results from shell, commands, and suggestions routed via InputArea."""
-        if self.current_mode == ConnectionMode.HERMES and message.sender == "user":
-            self.add_message(message.sender, message.text)
-            self.logger.log_event("user", "나", message.text)
-            if self.agent_manager:
-                asyncio.create_task(self.agent_manager.send(message.text))
-        elif self.current_mode == ConnectionMode.HERMES_ACP and message.sender == "user":
+        if self.current_mode == ConnectionMode.HERMES_ACP and message.sender == "user":
+            # Clear buffer and active widget for a new exchange
+            self._current_response_buffer = ""
+            self._active_ai_widget = None
+            
             self.add_message(message.sender, message.text)
             self.logger.log_event("user", "나", message.text)
             if self.acp_client:
@@ -203,6 +220,8 @@ class SessionWorkspace(Container):
         message_list.mount(MessageWidget(sender, text, is_shell=is_shell))
         message_list.scroll_end(animate=False)
 
-    def add_system_message(self, text: str, is_shell: bool = False):
-        self.logger.log_event("system", "[System]", text)
-        self.add_message("system", text, is_shell=is_shell)
+    def set_acp_status(self, text: str, color: str = "white"):
+        """Updates the ACP connection status bar."""
+        status_bar = self.query_one("#acp-status-bar", Static)
+        status_bar.update(text)
+        status_bar.styles.color = color

@@ -16,7 +16,7 @@ class HomeScreen(Container):
             yield Button("🌐 네트워크 연결", id="btn-network", classes="menu-button")
             yield Button("✨ GEMINI-CLI 연결", id="btn-gemini", classes="menu-button")
             yield Button("💻 OpenCode 연결", id="btn-opencode", classes="menu-button")
-            yield Button("☄️ Hermes 에이전트 연결", id="btn-hermes", classes="menu-button")
+            yield Button("⚡ Hermes ACP 연결", id="btn-hermes", classes="menu-button")
 
     def on_button_pressed(self, event: Button.Pressed):
         btn_id = event.button.id
@@ -25,7 +25,7 @@ class HomeScreen(Container):
             "btn-network": ConnectionMode.NETWORK,
             "btn-gemini": ConnectionMode.GEMINI,
             "btn-opencode": ConnectionMode.OPENCODE,
-            "btn-hermes": ConnectionMode.HERMES,
+            "btn-hermes": ConnectionMode.HERMES_ACP,
         }
         selected_mode = mode_map.get(btn_id)
         if selected_mode:

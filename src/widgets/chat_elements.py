@@ -27,6 +27,8 @@ class MessageWidget(Container):
             return f"User ❯ {text}"
         if self.sender == "ai":
             return f"AI ❯ {text}"
+        if self.sender == "thought":
+            return f"💭 Think ❯ {text}"
         return text
 
     def compose(self):
@@ -45,6 +47,11 @@ class MessageWidget(Container):
             self.add_class("msg-container")
             self.add_class("ai-msg")
             self._text_static = Static(self._get_formatted_text(self.text), classes="ai-text")
+            yield self._text_static
+        elif self.sender == "thought":
+            self.add_class("msg-container")
+            self.add_class("thought-msg")
+            self._text_static = Static(self._get_formatted_text(self.text), classes="thought-text")
             yield self._text_static
         else:
             self.add_class("msg-container")

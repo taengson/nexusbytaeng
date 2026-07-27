@@ -77,6 +77,12 @@ Screen {
     align-horizontal: left;
 }
 
+.msg-container.thought-msg {
+    align-horizontal: left;
+    background: #1a1d26;
+    padding: 0 1;
+}
+
 .msg-container.sys-msg {
     align-horizontal: center;
 }
@@ -84,6 +90,13 @@ Screen {
 .user-text {
     color: #f8fafc;
     text-style: bold;
+    width: 100%;
+    text-align: left;
+}
+
+.thought-text {
+    color: #94a3b8;
+    text-style: italic;
     width: 100%;
     text-align: left;
 }
@@ -382,6 +395,12 @@ SessionWorkspace {
     align-horizontal: left;
 }
 
+.msg-container.thought-msg {
+    align-horizontal: left;
+    background: #1a1d26;
+    padding: 0 1;
+}
+
 .msg-container.sys-msg {
     align-horizontal: center;
 }
@@ -389,6 +408,13 @@ SessionWorkspace {
 .user-text {
     color: #f8fafc;
     text-style: bold;
+    width: 100%;
+    text-align: left;
+}
+
+.thought-text {
+    color: #94a3b8;
+    text-style: italic;
     width: 100%;
     text-align: left;
 }

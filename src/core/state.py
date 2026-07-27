@@ -5,7 +5,7 @@ class ConnectionMode:
     NETWORK = "network"
     GEMINI = "gemini"
     OPENCODE = "opencode"
-    HERMES = "hermes"
+    HERMES_ACP = "hermes_acp"
 
     @classmethod
     def get_display_name(cls, mode: str) -> str:
@@ -14,7 +14,7 @@ class ConnectionMode:
             cls.NETWORK: "네트워크 연결",
             cls.GEMINI: "GEMINI-CLI 연결",
             cls.OPENCODE: "OpenCode 연결",
-            cls.HERMES: "Hermes 에이전트 연결",
+            cls.HERMES_ACP: "Hermes ACP 연결",
         }
         return names.get(mode, "알 수 없음")
 
@@ -26,6 +26,6 @@ class ConnectionMode:
             cls.NETWORK: ("$success", "green", "🌐"),
             cls.GEMINI: ("$accent", "purple", "✨"),
             cls.OPENCODE: ("$warning", "orange", "💻"),
-            cls.HERMES: ("$secondary", "yellow", "☄️"),
+            cls.HERMES_ACP: ("$secondary", "yellow", "⚡"),
         }
         return colors.get(mode, ("$text", "gray", "❓"))
