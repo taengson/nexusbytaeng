@@ -3,7 +3,7 @@
 class ConnectionMode:
     LOCAL = "local"
     NETWORK = "network"
-    GEMINI = "gemini"
+    GEMINI_ACP = "gemini_acp"
     OPENCODE = "opencode"
     HERMES_ACP = "hermes_acp"
 
@@ -12,7 +12,7 @@ class ConnectionMode:
         names = {
             cls.LOCAL: "로컬 AI 연결",
             cls.NETWORK: "네트워크 연결",
-            cls.GEMINI: "GEMINI-CLI 연결",
+            cls.GEMINI_ACP: "Gemini ACP 연결",
             cls.OPENCODE: "OpenCode 연결",
             cls.HERMES_ACP: "Hermes ACP 연결",
         }
@@ -24,7 +24,7 @@ class ConnectionMode:
         colors = {
             cls.LOCAL: ("$primary", "blue", "🤖"),
             cls.NETWORK: ("$success", "green", "🌐"),
-            cls.GEMINI: ("$accent", "purple", "✨"),
+            cls.GEMINI_ACP: ("$accent", "purple", "✨"),
             cls.OPENCODE: ("$warning", "orange", "💻"),
             cls.HERMES_ACP: ("$secondary", "yellow", "⚡"),
         }

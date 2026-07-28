@@ -318,7 +318,7 @@ HomeScreen {
 .input-mode-network {
     border-top: tall #10b981 !important;
 }
-.input-mode-gemini {
+.input-mode-gemini_acp {
     border-top: tall #8b5cf6 !important;
 }
 .input-mode-opencode {

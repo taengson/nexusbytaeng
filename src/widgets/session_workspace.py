@@ -72,31 +72,50 @@ class SessionWorkspace(Container):
                     on_message=self._handle_acp_message,
                     app_context=self.app
                 )
-                await self.acp_client.start()
-                
-                # Now send_request waits for response
-                await self.acp_client.initialize()
-                resp = await self.acp_client.create_session(cwd=".")
-                
-                if resp and "result" in resp:
-                    session_id = resp["result"].get("sessionId") or resp["result"].get("session_id")
-                    if session_id:
-                        self.acp_client.set_session_id(session_id)
-                        self.logger.log_event("system", "ACP", f"Session ID: {session_id}")
-                        self.set_acp_status(f"✅ ACP 연결됨 (ID: {session_id})", "#10b981")
-                        self.add_system_message(f"✅ ACP 연결됨 (session: {session_id})")
-                        self.input_area.can_focus = True
-                    else:
-                        self.set_acp_status("⚠️ ACP 세션 ID를 찾을 수 없습니다.", "#ef4444")
-                        self.add_system_message("⚠️ ACP 세션 ID를 찾을 수 없습니다.")
-                else:
-                    self.set_acp_status("⚠️ ACP 응답 비정상", "#ef4444")
-                    self.add_system_message("⚠️ ACP 세션 생성 응답이 비정상적입니다.")
-                
+                await self._connect_acp()
             except Exception as e:
                 self.set_acp_status(f"❌ ACP 연결 실패: {e}", "#ef4444")
                 self.add_system_message(f"❌ ACP 연결 실패: {e}\n홈 화면으로 돌아가거나 앱을 종료하십시오.")
-            # Removed finally: self.input_area.can_focus = True to keep it disabled on failure
+
+        elif self.current_mode == ConnectionMode.GEMINI_ACP:
+            # Use ACPClient for Gemini
+            self.input_area = self.query_one(InputArea)
+            self.input_area.can_focus = False
+            self.set_acp_status("✨ Gemini ACP 연결 중... (잠시만 기다려 주세요)", "#94a3b8")
+            self.add_system_message("🔄 Gemini ACP 연결 중...")
+            
+            try:
+                self.acp_client = ACPClient(
+                    command=["gemini", "--acp"], 
+                    on_message=self._handle_acp_message,
+                    app_context=self.app
+                )
+                await self._connect_acp()
+            except Exception as e:
+                self.set_acp_status(f"❌ Gemini ACP 연결 실패: {e}", "#ef4444")
+                self.add_system_message(f"❌ Gemini ACP 연결 실패: {e}\n홈 화면으로 돌아가거나 앱을 종료하십시오.")
+
+    async def _connect_acp(self):
+        """Common ACP connection logic for Hermes and Gemini."""
+        await self.acp_client.start()
+        await self.acp_client.initialize()
+        resp = await self.acp_client.create_session(cwd=".")
+        
+        if resp and "result" in resp:
+            session_id = resp["result"].get("sessionId") or resp["result"].get("session_id")
+            if session_id:
+                self.acp_client.set_session_id(session_id)
+                self.logger.log_event("system", "ACP", f"Session ID: {session_id}")
+                mode_symbol = "✨" if self.current_mode == ConnectionMode.GEMINI_ACP else "⚡"
+                self.set_acp_status(f"✅ ACP 연결됨 (ID: {session_id})", "#10b981")
+                self.add_system_message(f"✅ ACP 연결됨 (session: {session_id})")
+                self.input_area.can_focus = True
+            else:
+                self.set_acp_status("⚠️ ACP 세션 ID를 찾을 수 없습니다.", "#ef4444")
+                self.add_system_message("⚠️ ACP 세션 ID를 찾을 수 없습니다.")
+        else:
+            self.set_acp_status("⚠️ ACP 응답 비정상", "#ef4444")
+            self.add_system_message("⚠️ ACP 세션 생성 응답이 비정상적입니다.")
 
     def _finalize_ai_logging(self, token: int):
         """Logs the accumulated response buffer to the chat log.
@@ -216,7 +235,7 @@ class SessionWorkspace(Container):
         mock_responses = {
             ConnectionMode.LOCAL: f"🤖 [로컬 AI 응답]\n입력하신 쿼리 '{user_text}' 분석 완료.",
             ConnectionMode.NETWORK: f"🌐 [네트워크 응답]\n에코 패킷 수신 성공: '{user_text}'",
-            ConnectionMode.GEMINI: f"✨ [GEMINI-CLI 응답]\n구문 해석 성공.",
+            ConnectionMode.GEMINI_ACP: f"✨ [Gemini ACP 응답]\n구문 해석 성공.",
             ConnectionMode.OPENCODE: f"💻 [OpenCode 응답]\n프로젝트 컨텍스트 주입 완료."
         }
         
