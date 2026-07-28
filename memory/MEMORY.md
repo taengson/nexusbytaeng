@@ -34,6 +34,16 @@
   - P2: Think/Response 시각적 분리 (`sender="thought"` 별도 위젯).
   - P3: ACP 연결 상태 시각적 개선 (`#acp-status-bar` + 단계별 색상).
   - P4: Tool 이름 `None` 로깅 수정 (`name`/`toolName` 교차 확인).
+- [x] **Phase 3.7: ACP 버그 수정 및 로깅 무결성 확보** (완료 - 2026-07-28) [[MEMORY-2026-07-28]]
+  - Response 소실 해결: `update_last_ai_message`에 sender 일치 체크 추가.
+  - Think 쪼개짐 해결: `agent_thought_chunk` 조건부 리셋으로 위젯 누적.
+  - 쉘 입력 유출 차단: `on_input_result`에 `is_shell` 체크 추가.
+  - 로그 분절 해결: 토큰 기반 타이머 무효화로 중복 로깅 방지.
+  - 버퍼 플러시: `on_remove`에서 남은 응답 버퍼 강제 기록.
+  - 세션 모드 로깅: `start_session`에 `mode_name` 파라미터 추가.
+  - ACP 세션 ID 로깅: 연결 성공 시 `sessionId` 기록.
+  - 쉘 명령어 가시성: 입력값을 UI/로그에 먼저 표시.
+  - Dead Code 제거: Raw Pipe 모드 관련 import 및 메서드 제거.
 - [ ] **Phase 4: LLM Client & Network (WebSocket) Integration** (대기) [[MEMORY-2026-07-21]]
   - Multi-provider LLM을 지원하는 `AgentRegistry` 구현 및 `litellm` 연동.
   - 비동기 백기그라운드 태스크 기반 WebSocket 브로커 서버 및 네트워크 패널 완성.
@@ -55,7 +65,7 @@
 | **ACP Client** | `src/core/acp.py` | [완성] JSON-RPC 2.0 통신, 핸드셰이크, 스트리밍 | `call_next` 기반 UI 스레드 브리징, Future 기반 응답 매칭 [[MEMORY-2026-07-23]], [[MEMORY-2026-07-27]] |
 | **Chat Logger** | `src/core/logger.py` | [완성] 일별 Markdown 로그 기록 | P1로 AI 응답 로깅 완결 (2초 타임아웃 플러시) [[MEMORY-2026-07-27]] |
 | **Stream Parser** | `src/core/stream_parser.py` | [완성] Raw pipe용 줄 단위 메시지 파싱 | ACP 모드에서는 미사용, Raw pipe 모드 전용 [[MEMORY-2026-07-27]] |
-| **Session Workspace** | `src/widgets/session_workspace.py` | [완성] 메시지 스택, Think 분리, 연결 상태 바, 로깅 | `_active_ai_widget` 기반 위젯 추적, `#acp-status-bar` 상태 표시 [[MEMORY-2026-07-27]] |
+| **Session Workspace** | `src/widgets/session_workspace.py` | [완성] 메시지 스택, Think 분리, 연결 상태 바, 로깅, 쉘 유출 차단 | `_active_ai_widget` 기반 위젯 추적, `#acp-status-bar` 상태 표시, 토큰 기반 타이머 무효화, is_shell 체크 [[MEMORY-2026-07-27]], [[MEMORY-2026-07-28]] |
 
 ---
 
@@ -128,3 +138,4 @@ AI 에이전트는 작업을 할당받을 때마다 아래의 **5단계 라이�
 * [2026-07-22: 추가 작업 진행](./MEMORY-2026-07-22.md)
 * [2026-07-23: ACP 기초 인프라 구축 및 근본 원인 분석](./MEMORY-2026-07-23.md)
 * [2026-07-27: ACP 완전 전환, Raw Pipe 제거, UI/UX 폴리싱 문제 발견](./MEMORY-2026-07-27.md)
+* [2026-07-28: ACP 버그 수정, 로깅 무결성 확보, 쉘 입력 유출 차단](./MEMORY-2026-07-28.md)
