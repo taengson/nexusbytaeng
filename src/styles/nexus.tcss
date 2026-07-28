@@ -295,6 +295,16 @@ HomeScreen {
     text-style: italic;
 }
 
+/* ACP 연결 상태 표시 바 */
+#acp-status-bar {
+    height: 1;
+    margin-top: 1;
+    color: #94a3b8;
+    text-style: italic bold;
+    background: #1e2128;
+    border-top: solid #2a2d37;
+}
+
 #input-guide {
     height: 1;
     color: #64748b;

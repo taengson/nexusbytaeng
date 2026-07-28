@@ -93,6 +93,9 @@ class InputArea(Container):
             # Handle other shell outputs
             self.update_input_mode_style(InputMode.SHELL)
             self.update_mode_visuals(InputMode.SHELL)
+            # First send the command the user typed
+            self.post_message(InputResult(text=text, sender="user", is_shell=True))
+            # Then send the result
             self.post_message(InputResult(text=f"🐚 Shell Output:\n{result}", sender="system", is_shell=True))
             event.stop()
             return

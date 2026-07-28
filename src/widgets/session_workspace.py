@@ -9,9 +9,7 @@ from src.widgets.chat_elements import MessageWidget
 from src.widgets.input_area import InputArea, InputResult
 from src.core.state import ConnectionMode
 from typing import Dict, Any
-from src.core.agent_process import AgentProcessManager
 from src.core.acp import ACPClient
-from src.core.stream_parser import StreamParser
 from src.core.logger import ChatLogManager
 
 class SessionWorkspace(Container):
@@ -23,21 +21,14 @@ class SessionWorkspace(Container):
         self.agent_manager = None
         self.acp_client = None
         self.logger = ChatLogManager()
-        self.parser = StreamParser()
         self._active_ai_widget = None
         self._current_response_buffer = ""
         self._logging_timer = None
-    def _handle_agent_output(self, text: str):
-        # Parse and clean the incoming stream text
-        messages = self.parser.process_chunk(text)
-        
-        for msg in messages:
-            self.logger.log_event("ai", "AI", msg)
-            self.app.call_from_thread(self.update_last_ai_message, msg)
+        self._logging_token = 0
 
     def update_last_ai_message(self, text: str, sender: str = "ai"):
         """Appends text to the active AI message widget to support streaming."""
-        if self._active_ai_widget:
+        if self._active_ai_widget and self._active_ai_widget.sender == sender:
             self._active_ai_widget.append_text(text + " ")
         else:
             # Create a new message widget and track it
@@ -59,8 +50,8 @@ class SessionWorkspace(Container):
 
     async def on_mount(self):
         # Emit session initial status logs
-        self.logger.start_session()
         display_name = ConnectionMode.get_display_name(self.current_mode)
+        self.logger.start_session(display_name)
         _, _, symbol = ConnectionMode.get_theme_color(self.current_mode)
         
         self.add_system_message(f"--- {symbol} {display_name} 워크스페이스 세션이 시작되었습니다 ---")
@@ -91,6 +82,7 @@ class SessionWorkspace(Container):
                     session_id = resp["result"].get("sessionId") or resp["result"].get("session_id")
                     if session_id:
                         self.acp_client.set_session_id(session_id)
+                        self.logger.log_event("system", "ACP", f"Session ID: {session_id}")
                         self.set_acp_status(f"✅ ACP 연결됨 (ID: {session_id})", "#10b981")
                         self.add_system_message(f"✅ ACP 연결됨 (session: {session_id})")
                         self.input_area.can_focus = True
@@ -106,8 +98,11 @@ class SessionWorkspace(Container):
                 self.add_system_message(f"❌ ACP 연결 실패: {e}\n홈 화면으로 돌아가거나 앱을 종료하십시오.")
             # Removed finally: self.input_area.can_focus = True to keep it disabled on failure
 
-    def _finalize_ai_logging(self):
-        """Logs the accumulated response buffer to the chat log."""
+    def _finalize_ai_logging(self, token: int):
+        """Logs the accumulated response buffer to the chat log.
+        Uses token-based validation to ensure only the latest timer triggers logging."""
+        if token != self._logging_token:
+            return  # This timer was invalidated by a newer one
         if self._current_response_buffer:
             self.logger.log_event("ai", "AI", self._current_response_buffer)
             self._current_response_buffer = ""
@@ -115,10 +110,6 @@ class SessionWorkspace(Container):
 
     def _handle_acp_message(self, data: Dict[str, Any]):
         """Handles JSON-RPC messages from ACPClient."""
-        # Reset logging timer on any update
-        if self._logging_timer:
-            self._logging_timer.cancel()
-
         # 1. Handle Responses (Requests with ID)
         if data.get("type") == "response":
             resp = data.get("data", {})
@@ -143,12 +134,18 @@ class SessionWorkspace(Container):
                 text = content.get("text", "")
                 self.update_last_ai_message(text, sender="ai")
                 self._current_response_buffer += text
-                # Set timer to log full response after 2 seconds of silence
-                self._logging_timer = self.app.call_later(2.0, self._finalize_ai_logging)
+                # Token-based timer invalidation: increment token, capture in lambda
+                self._logging_token += 1
+                token = self._logging_token
+                self._logging_timer = self.set_timer(
+                    2.0, 
+                    lambda t=token: self._finalize_ai_logging(t)
+                )
             elif update_type == "agent_thought_chunk":
                 thought = content.get("text", "")
-                # Separate thought from response: reset active widget to start a new 'thought' block
-                self._active_ai_widget = None 
+                # Only reset if current active widget is not a thought widget
+                if not self._active_ai_widget or self._active_ai_widget.sender != "thought":
+                    self._active_ai_widget = None
                 self.update_last_ai_message(thought, sender="thought")
             elif update_type == "tool_call":
                 tool_name = update.get('name') or update.get('toolName') or "Unknown Tool"
@@ -162,9 +159,13 @@ class SessionWorkspace(Container):
 
     def on_input_result(self, message: InputResult):
         """Handles results from shell, commands, and suggestions routed via InputArea."""
-        if self.current_mode == ConnectionMode.HERMES_ACP and message.sender == "user":
+        if self.current_mode == ConnectionMode.HERMES_ACP and message.sender == "user" and not message.is_shell:
+            # Flush remaining AI response buffer before starting new exchange
+            if self._current_response_buffer:
+                self.logger.log_event("ai", "AI", self._current_response_buffer)
+                self._current_response_buffer = ""
+            
             # Clear buffer and active widget for a new exchange
-            self._current_response_buffer = ""
             self._active_ai_widget = None
             
             self.add_message(message.sender, message.text)
@@ -172,13 +173,21 @@ class SessionWorkspace(Container):
             if self.acp_client:
                 asyncio.create_task(self.acp_client.prompt(message.text))
         else:
-            self.add_message(message.sender, message.text, is_shell=message.is_shell)
-            category = "shell" if message.is_shell else "user"
-            role = "Shell" if message.is_shell else "나"
-            self.logger.log_event(category, role, message.text)
+            if message.is_shell and message.sender == "user":
+                # Shell command input — display and log the command
+                self.add_message("user", f"🐚 > {message.text}")
+                self.logger.log_event("shell", "나", message.text)
+            else:
+                self.add_message(message.sender, message.text, is_shell=message.is_shell)
+                category = "shell" if message.is_shell else "user"
+                role = "Shell" if message.is_shell else "나"
+                self.logger.log_event(category, role, message.text)
 
-
-
+    def on_remove(self) -> None:
+        """Flush remaining response buffer when session is closing."""
+        if self._current_response_buffer:
+            self.logger.log_event("ai", "AI", self._current_response_buffer)
+            self._current_response_buffer = ""
 
     def on_input_area_mode_changed(self, message: InputArea.ModeChanged):
         """Reacts to connection switches from the InputArea settings."""
@@ -225,3 +234,8 @@ class SessionWorkspace(Container):
         status_bar = self.query_one("#acp-status-bar", Static)
         status_bar.update(text)
         status_bar.styles.color = color
+
+    def add_system_message(self, text: str):
+        """Displays a system-level notification message in the chat list."""
+        self.add_message("system", text)
+

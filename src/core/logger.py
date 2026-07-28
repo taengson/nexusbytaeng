@@ -11,10 +11,10 @@ class ChatLogManager:
         date_str = datetime.now().strftime("%Y-%m-%d")
         return os.path.join(self.log_dir, f"chat_log_{date_str}.md")
 
-    def start_session(self) -> None:
+    def start_session(self, mode_name: str = "Unknown") -> None:
         """Marks the beginning of a new session in the log file."""
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        log_entry = f"\n--- Session Started at [{timestamp}] ---\n"
+        log_entry = f"\n--- Session Started at [{timestamp}] (Mode: {mode_name}) ---\n"
         self._write_to_file(log_entry)
 
     def log_event(self, category: str, role: str, message: str) -> None:
