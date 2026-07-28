@@ -21,9 +21,19 @@
 - [x] **Phase 2: Toad-style Input System** (완료 - 2026-07-16) [[MEMORY-2026-07-16]]
   - `!` (쉘 실행), `/` (슬래시 명령어), `@` (경로/파일 제안) 실시간 파싱 및 상태 기반 라우팅 완료.
   - `ConfirmationModal` 및 `SuggestionPanel` 통합 UI 구현 완료.
-- [ ] **Phase 3: Input UI/UX Polishing & Suggestions Logic** (진행 중 - 2026-07-16) [[MEMORY-2026-07-20]]
+- [x] **Phase 3: Input UI/UX Polishing & Suggestions Logic** (완료 - 2026-07-20) [[MEMORY-2026-07-20]]
   - `#confirm-modal-container` 크기 최적화 및 쉘 출력용 `.shell-bubble` 스타일 적용.
   - `InputDispatcher` 실시간 `get_suggestions` 데이터 바인딩 및 자동완성 키 입력 이벤트 연결.
+- [x] **Phase 3.5: ACP 통합** (완료 - 2026-07-27) [[MEMORY-2026-07-27]]
+  - `HERMES_ACP` 모드로 단일화, `ACPClient` 기반 JSON-RPC 통신 완료.
+  - `HomeScreen` 진입로 확보, Raw Pipe(`HERMES`) 제거.
+  - `agent_process.py` 디버그 코드 정제.
+- [x] **Phase 3.6: ACP UI/UX 폴리싱** (완료 - 2026-07-27) [[MEMORY-2026-07-27]]
+  - P0: 메시지 스택 쌓임 문제 (`_active_ai_widget` 기반 위젯 추적).
+  - P1: AI 응답 로깅 완결 (`call_later` 기반 2초 타임아웃 플러시).
+  - P2: Think/Response 시각적 분리 (`sender="thought"` 별도 위젯).
+  - P3: ACP 연결 상태 시각적 개선 (`#acp-status-bar` + 단계별 색상).
+  - P4: Tool 이름 `None` 로깅 수정 (`name`/`toolName` 교차 확인).
 - [ ] **Phase 4: LLM Client & Network (WebSocket) Integration** (대기) [[MEMORY-2026-07-21]]
   - Multi-provider LLM을 지원하는 `AgentRegistry` 구현 및 `litellm` 연동.
   - 비동기 백기그라운드 태스크 기반 WebSocket 브로커 서버 및 네트워크 패널 완성.
@@ -41,7 +51,11 @@
 | **Input Area** | `src/widgets/input_area.py` | [진행] 모드별 테마 및 제안 패널 연동 UI | `on_change` 이벤트 연동 및 `.shell-bubble` 적용 대기 [[MEMORY-2026-07-20]] |
 | **Suggestion UI**| `src/widgets/suggestions.py` | [진행] 추천 키워드 리스트 뷰 패널 | 패널 상단 안내 가이드 `Label` 추가 대기 [[MEMORY-2026-07-16]] |
 | **Global Style** | `src/styles/nexus.tcss` | [진행] 다크 다이얼 테마 및 카드 메시지 버블 | 모달 창 컷팅 현상 방지 및 모드별 색상 튜닝 중 [[MEMORY-2026-07-20]] |
-| **Global State** | `src/core/state.py` | [스켈레톤] 모드 및 액티브 세션 상태 제어 | 추후 세션 데이터 직렬화 시 확장 필요 [[MEMORY-2026-07-21]] |
+| **Global State** | `src/core/state.py` | [완성] 모드 및 액티브 세션 상태 제어 | `HERMES_ACP` 상수 추가, Raw Pipe(`HERMES`) 제거 [[MEMORY-2026-07-27]] |
+| **ACP Client** | `src/core/acp.py` | [완성] JSON-RPC 2.0 통신, 핸드셰이크, 스트리밍 | `call_next` 기반 UI 스레드 브리징, Future 기반 응답 매칭 [[MEMORY-2026-07-23]], [[MEMORY-2026-07-27]] |
+| **Chat Logger** | `src/core/logger.py` | [완성] 일별 Markdown 로그 기록 | P1로 AI 응답 로깅 완결 (2초 타임아웃 플러시) [[MEMORY-2026-07-27]] |
+| **Stream Parser** | `src/core/stream_parser.py` | [완성] Raw pipe용 줄 단위 메시지 파싱 | ACP 모드에서는 미사용, Raw pipe 모드 전용 [[MEMORY-2026-07-27]] |
+| **Session Workspace** | `src/widgets/session_workspace.py` | [완성] 메시지 스택, Think 분리, 연결 상태 바, 로깅 | `_active_ai_widget` 기반 위젯 추적, `#acp-status-bar` 상태 표시 [[MEMORY-2026-07-27]] |
 
 ---
 
@@ -70,18 +84,35 @@ AI 에이전트는 작업을 할당받을 때마다 아래의 **5단계 라이�
 ```
 
 1. **Read Stage (컨텍스트 동기화)**:
-   - 작업을 시작할 때 본 `memory/MEMORY.md`와 가장 최근 세션 로그(`memory/MEMORY-YYYY-MM-DD.md`)를 먼저 읽고 개발 컨텍스트를 완벽히 이해해야 합니다.
+    - 작업을 시작할 때 본 `memory/MEMORY.md`와 가장 최근 세션 로그(`memory/MEMORY-YYYY-MM-DD.md`)를 먼저 읽고 개발 컨텍스트를 완벽히 이해해야 합니다.
 2. **Plan & Record Stage (계획 수립 및 기록)**:
-   - **구현 계획이나 수정 계획이 수립되면, 즉시 당일 세션 파일(`memory/MEMORY-YYYY-MM-DD.md`)을 생성하거나 업데이트하여 해당 계획을 기록해야 합니다.**
-   - 코드를 수정하기 전, 무엇을 어떻게 바꿀 것인지 기록하여 "바이브 코딩"의 의도와 설계 방향을 명확히 합니다.
+    - **구현 계획이나 수정 계획이 수립되면, 즉시 당일 세션 파일(`memory/MEMORY-YYYY-MM-DD.md`)을 생성하거나 업데이트하여 해당 계획을 기록해야 합니다.**
+    - **중요**: 세션 파일 기록 시 `write` 도구로 전체를 덮어쓰지 말고, 기존 내용을 보존하며 하단에 새로운 기록을 추가(Append)하는 방식으로 히스토리를 유지하십시오.
+    - 코드를 수정하기 전, 무엇을 어떻게 바꿀 것인지 기록하여 "바이브 코딩"의 의도와 설계 방향을 명확히 합니다.
 3. **Code Stage (외과수술식 수정)**:
-   - 불필요하게 연관 없는 주변 코드를 건드려 버그를 만들지 마십시오. 오직 해결해야 할 모듈을 타겟하여 정교하게(`surgical`) 수정하십시오.
-   - 위의 **`Crucial Guardrails`**를 훼손하는 코드를 작성해서는 안 됩니다.
+    - 불필요하게 연관 없는 주변 코드를 건드려 버그를 만들지 마십시오. 오직 해결해야 할 모듈을 타겟하여 정교하게(`surgical`) 수정하십시오.
+    - 위의 **`Crucial Guardrails`**를 훼손하는 코드를 작성해서는 안 됩니다.
 4. **Validate Stage (실행 및 무결성 검증)**:
-   - 변경 사항을 적용한 후, 반드시 `python3 -m src.main` 실행 테스트 또는 단위 테스트 스크립트를 통해 에러 유무를 육안과 쉘 명령어로 검증해야 합니다.
+    - 변경 사항을 적용한 후, 반드시 `python3 -m src.main` 실행 테스트 또는 단위 테스트 스크립트를 통해 에러 유무를 육안과 쉘 명령어로 검증해야 합니다.
 5. **Update Stage (컨텍스트 영속화)**:
-   - 작업 완료 후, 당일 세션 파일에 최종적으로 어떤 변경을 주었고 어떤 기술적 의사결정을 내렸는지 일지를 업데이트하여 마무리합니다.
-   - 새로 발견된 제약 사항이 있다면 이 마스터 파일의 `Crucial Guardrails`에 추가하고, 컴포넌트의 구현 상황이 변했다면 `Component State Map`을 갱신하십시오.
+    - 작업 완료 후, 당일 세션 파일에 최종적으로 어떤 변경을 주었고 어떤 기술적 의사결정을 내렸는지 일지를 업데이트하여 마무리합니다.
+    - 새로 발견된 제약 사항이 있다면 이 마스터 파일의 `Crucial Guardrails`에 추가하고, 컴포넌트의 구현 상황이 변했다면 `Component State Map`을 갱신하십시오.
+
+
+---
+
+## 🏷️ 협업 태그 규칙
+
+`memory/` 폴더의 모든 세션 파일은 역할 구분 태그를 반드시 붙입니다:
+
+| 태그 | 작성자 | 내용 |
+|---|---|---|
+| `[리뷰어]` | 리뷰어/기획자 | 코드 분석, 문제 발견, 수정 제안, 설계 판단 |
+| `[개발자]` | 코드 개발자 | 구현 계획, 구현 결과, 테스트 보고, 피드백 |
+
+- **규칙**: 제목과 섹션 구분선에 태그를 붙여 `[리뷰어] 분석`, `[개발자] 구현 완료` 형식 사용
+- **목적**: 한 파일 안에서 누가 무엇을 썼는지 즉시 식별 가능
+- 예: `## 🔍 [리뷰어] ACP 코드 리뷰 결과`, `## 🛠 [개발자] 구현 완료`
 
 ---
 
@@ -92,3 +123,8 @@ AI 에이전트는 작업을 할당받을 때마다 아래의 **5단계 라이�
 * [2026-07-14: 레거시 분석 기반 세션 복구 및 초기 핵심 목표 수립](./MEMORY-2026-07-14.md)
 * [2026-07-15: 홈 화면 분리, 사이드바 중복 제거 및 네비게이션 구조화](./MEMORY-2026-07-15.md)
 * [2026-07-16: Toad-style 실시간 명령어/쉘/경로 입력 엔진 설계 및 파일 레이아웃 완성](./MEMORY-2026-07-16.md)
+* [2026-07-20: Input UI/UX 폴리싱 진행](./MEMORY-2026-07-20.md)
+* [2026-07-21: LLM Client & Network Integration 계획](./MEMORY-2026-07-21.md)
+* [2026-07-22: 추가 작업 진행](./MEMORY-2026-07-22.md)
+* [2026-07-23: ACP 기초 인프라 구축 및 근본 원인 분석](./MEMORY-2026-07-23.md)
+* [2026-07-27: ACP 완전 전환, Raw Pipe 제거, UI/UX 폴리싱 문제 발견](./MEMORY-2026-07-27.md)
