@@ -88,9 +88,7 @@ class ACPClient:
                         # It's a notification (e.g., session/update)
                         await self._handle_notification(data)
                     else:
-                        # It's a response to a request. 
-                        # In a full implementation, we'd map this to a Future.
-                        # For now, we route it to on_message if it's relevant.
+                        # It's a response to a request.
                         await self._handle_response(data)
                 except json.JSONDecodeError:
                     logger.debug(f"Non-JSON output received: {line.decode().strip()}")

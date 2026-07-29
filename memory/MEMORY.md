@@ -44,6 +44,12 @@
   - ACP 세션 ID 로깅: 연결 성공 시 `sessionId` 기록.
   - 쉘 명령어 가시성: 입력값을 UI/로그에 먼저 표시.
   - Dead Code 제거: Raw Pipe 모드 관련 import 및 메서드 제거.
+- [x] **Phase 3.8: Gemini ACP 통합** (완료 - 2026-07-29) [[MEMORY-2026-07-29]]
+  - `ConnectionMode.GEMINI_ACP` 상수 추가, 기존 `GEMINI` 모드 통합.
+  - `HomeScreen` Gemini ACP 진입로 단일화.
+  - `session_workspace.py`에서 `command=["gemini", "--acp"]`로 ACPClient 생성.
+  - P0 해결: `on_input_result`에서 `GEMINI_ACP` 조건 추가 → 프롬프트 전송 정상화.
+  - Hermes ACP, Gemini ACP 모두 정상 동작 검증 완료.
 - [ ] **Phase 4: LLM Client & Network (WebSocket) Integration** (대기) [[MEMORY-2026-07-21]]
   - Multi-provider LLM을 지원하는 `AgentRegistry` 구현 및 `litellm` 연동.
   - 비동기 백기그라운드 태스크 기반 WebSocket 브로커 서버 및 네트워크 패널 완성.
@@ -139,3 +145,4 @@ AI 에이전트는 작업을 할당받을 때마다 아래의 **5단계 라이�
 * [2026-07-23: ACP 기초 인프라 구축 및 근본 원인 분석](./MEMORY-2026-07-23.md)
 * [2026-07-27: ACP 완전 전환, Raw Pipe 제거, UI/UX 폴리싱 문제 발견](./MEMORY-2026-07-27.md)
 * [2026-07-28: ACP 버그 수정, 로깅 무결성 확보, 쉘 입력 유출 차단](./MEMORY-2026-07-28.md)
+* [2026-07-29: Gemini ACP 통합, P0 응답 미수신 해결](./MEMORY-2026-07-29.md)

@@ -178,7 +178,7 @@ class SessionWorkspace(Container):
 
     def on_input_result(self, message: InputResult):
         """Handles results from shell, commands, and suggestions routed via InputArea."""
-        if self.current_mode == ConnectionMode.HERMES_ACP and message.sender == "user" and not message.is_shell:
+        if self.current_mode in (ConnectionMode.HERMES_ACP, ConnectionMode.GEMINI_ACP) and message.sender == "user" and not message.is_shell:
             # Flush remaining AI response buffer before starting new exchange
             if self._current_response_buffer:
                 self.logger.log_event("ai", "AI", self._current_response_buffer)
