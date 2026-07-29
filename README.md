@@ -33,10 +33,11 @@ python3 -m src.main
 
 ## 2. Key Features
 
-### 🤖 Multi-Agent System
-- **Agent Registry**: Support for multiple AI configurations (model, API key, system prompt) defined in `config.json`.
-- **Dynamic Switching**: Ability to switch active agents on-the-fly.
-- **Default Agent**: Maintain the existing AI chat functionality as the 'Default' agent.
+### 🤖 ACP (Agent Client Protocol) Support
+- **Multi-Agent Integration**: Support for multiple ACP-compatible agents (Hermes, Gemini).
+- **Real-time Streaming**: Streaming AI responses with Thought/Response visual separation.
+- **Session Management**: ACP-based session creation, prompt transmission, and notification handling.
+- **Shell Integration**: Shell command execution (`!` prefix) with input visibility and logging.
 
 ### 🎨 Modernized UI/UX
 - **Hierarchical Layout**: 
@@ -48,13 +49,15 @@ python3 -m src.main
     - Card-style message bubbles for improved readability.
 - **Adaptive Components**: Role-specific widgets for `UserInput`, `AIResponse`, and `SystemNote`.
 
-### ⌨️ Command Palette & Navigation
-- **Command Palette**: A central search interface for executing commands.
+### ⌨️ Toad-style Input System
+- **Shell Execution**: `!` prefix for shell command execution.
+- **Slash Commands**: `/` prefix for slash commands.
+- **Path/File Suggestions**: `@` prefix for path/file suggestions.
 - **Quick Navigation**: Keyboard shortcuts for switching views (e.g., `h` to return home).
 
-### 🌐 Hybrid Networking
-- **Integrated WebSocket**: Seamless integration of network chat within the AI-centric environment.
-- **Connectivity Diagnostics**: Built-in `/test` command to verify server reachability.
+### 📝 Logging & Diagnostics
+- **Chat Logging**: Daily Markdown log files with session mode, ACP session ID, and shell commands.
+- **Buffer Flush**: Automatic response buffer flush on session close.
 
 ---
 
@@ -66,8 +69,9 @@ python3 -m src.main
 
 ### 🛠️ Implementation Stack
 - **Framework**: `textual`
-- **LLM Interface**: `litellm`
+- **Protocol**: ACP (Agent Client Protocol) via JSON-RPC 2.0
 - **Styling**: `.tcss` stylesheets.
+- **Supported Agents**: Hermes ACP, Gemini ACP
 
 ---
 
@@ -75,21 +79,27 @@ python3 -m src.main
 
 ### Phase 1: Infrastructure & Core Logic
 - [x] Initialize `nexusbytaeng` repository.
-- [ ] Implement `AgentRegistry` to handle multiple AI configurations.
-- [ ] Refactor LLM core to support dynamic agent switching.
-
-### Phase 2: UI Foundation (The "Modern Look")
 - [x] Implement `HomeScreen` as the landing hub.
 - [x] Implement `TabbedContent` based workspace layout.
+
+### Phase 2: UI Foundation (The "Modern Look")
 - [x] Create `.tcss` theme and professional dark mode.
 - [x] Build role-specific message widgets and `SessionWorkspace` (Tree + Chat).
+- [x] Toad-style input system (`!`, `/`, `@` prefix parsing).
 
-### Phase 3: Navigation & Interaction
-- [ ] Implement `Command Palette` for efficient feature access.
-- [ ] Integrate the `/test` connectivity tool and detailed logging.
-- [ ] Refine transition between Home and Workspaces.
+### Phase 3: ACP Integration & UI/UX Polishing
+- [x] ACP (Agent Client Protocol) integration via JSON-RPC 2.0.
+- [x] Hermes ACP support (handshake, session, streaming).
+- [x] Gemini ACP support (Phase 3.8).
+- [x] UI/UX polishing (message stack, Think/Response separation, ACP status bar).
+- [x] Logging integrity (token-based timer, buffer flush, session mode logging).
+- [x] Shell input leak prevention and command visibility.
 
-### Phase 4: Polish & Stability
+### Phase 4: LLM Client & Network (WebSocket) Integration
+- [ ] Multi-provider LLM support via `AgentRegistry` and `litellm`.
+- [ ] Async WebSocket broker server and network panel.
+
+### Phase 5: Polish & Stability
 - [ ] Refine animations and transitions.
 - [ ] Stress test multi-agent context switching.
 - [ ] Finalize documentation and configuration examples.
