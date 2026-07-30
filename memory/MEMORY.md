@@ -50,6 +50,13 @@
   - `session_workspace.py`에서 `command=["gemini", "--acp"]`로 ACPClient 생성.
   - P0 해결: `on_input_result`에서 `GEMINI_ACP` 조건 추가 → 프롬프트 전송 정상화.
   - Hermes ACP, Gemini ACP 모두 정상 동작 검증 완료.
+- [x] **Phase 3.9: OpenCode ACP 통합** (완료 - 2026-07-30) [[MEMORY-2026-07-30]]
+  - `ConnectionMode.OPENCODE_ACP` 상수 추가, 일관성 유지를 위해 `_ACP` 접미사 유지.
+  - `get_display_name()` 메서드로 사용자 친화적 이름 표시 ("OpenCode 연결").
+  - `session_workspace.py` 에서 `command=["opencode", "acp"]` 로 ACPClient 연결 구현.
+  - Toad 패턴 참조: 에이전트 설정 파일 기반 명령어 실행.
+  - P0 해결: 3 에이전트 (Gemini, OpenCode, Hermes) 모두 정상 연결 및 응답 검증.
+  - 변경 파일: `state.py`, `session_workspace.py`, `input_area.py`, `home_screen.py` (4 파일, ~22 줄).
 - [ ] **Phase 4: LLM Client & Network (WebSocket) Integration** (대기) [[MEMORY-2026-07-21]]
   - Multi-provider LLM을 지원하는 `AgentRegistry` 구현 및 `litellm` 연동.
   - 비동기 백기그라운드 태스크 기반 WebSocket 브로커 서버 및 네트워크 패널 완성.
@@ -67,11 +74,11 @@
 | **Input Area** | `src/widgets/input_area.py` | [진행] 모드별 테마 및 제안 패널 연동 UI | `on_change` 이벤트 연동 및 `.shell-bubble` 적용 대기 [[MEMORY-2026-07-20]] |
 | **Suggestion UI**| `src/widgets/suggestions.py` | [진행] 추천 키워드 리스트 뷰 패널 | 패널 상단 안내 가이드 `Label` 추가 대기 [[MEMORY-2026-07-16]] |
 | **Global Style** | `src/styles/nexus.tcss` | [진행] 다크 다이얼 테마 및 카드 메시지 버블 | 모달 창 컷팅 현상 방지 및 모드별 색상 튜닝 중 [[MEMORY-2026-07-20]] |
-| **Global State** | `src/core/state.py` | [완성] 모드 및 액티브 세션 상태 제어 | `HERMES_ACP` 상수 추가, Raw Pipe(`HERMES`) 제거 [[MEMORY-2026-07-27]] |
+| **Global State** | `src/core/state.py` | [완성] 모드 및 액티브 세션 상태 제어 | `HERMES_ACP`, `GEMINI_ACP`, `OPENCODE_ACP` 상수 추가, `get_display_name()` 으로 사용자 친화적 이름 표시 [[MEMORY-2026-07-27]], [[MEMORY-2026-07-29]], [[MEMORY-2026-07-30]] |
 | **ACP Client** | `src/core/acp.py` | [완성] JSON-RPC 2.0 통신, 핸드셰이크, 스트리밍 | `call_next` 기반 UI 스레드 브리징, Future 기반 응답 매칭 [[MEMORY-2026-07-23]], [[MEMORY-2026-07-27]] |
 | **Chat Logger** | `src/core/logger.py` | [완성] 일별 Markdown 로그 기록 | P1로 AI 응답 로깅 완결 (2초 타임아웃 플러시) [[MEMORY-2026-07-27]] |
 | **Stream Parser** | `src/core/stream_parser.py` | [완성] Raw pipe용 줄 단위 메시지 파싱 | ACP 모드에서는 미사용, Raw pipe 모드 전용 [[MEMORY-2026-07-27]] |
-| **Session Workspace** | `src/widgets/session_workspace.py` | [완성] 메시지 스택, Think 분리, 연결 상태 바, 로깅, 쉘 유출 차단 | `_active_ai_widget` 기반 위젯 추적, `#acp-status-bar` 상태 표시, 토큰 기반 타이머 무효화, is_shell 체크 [[MEMORY-2026-07-27]], [[MEMORY-2026-07-28]] |
+| **Session Workspace** | `src/widgets/session_workspace.py` | [완성] 메시지 스택, Think 분리, 연결 상태 바, 로깅, 쉘 유출 차단, **OpenCode ACP 연결** | `_active_ai_widget` 기반 위젯 추적, `#acp-status-bar` 상태 표시, 토큰 기반 타이머 무효화, is_shell 체크, **OPENCODE_ACP 분기 추가** [[MEMORY-2026-07-27]], [[MEMORY-2026-07-28]], [[MEMORY-2026-07-29]], [[MEMORY-2026-07-30]] |
 
 ---
 
@@ -146,3 +153,4 @@ AI 에이전트는 작업을 할당받을 때마다 아래의 **5단계 라이�
 * [2026-07-27: ACP 완전 전환, Raw Pipe 제거, UI/UX 폴리싱 문제 발견](./MEMORY-2026-07-27.md)
 * [2026-07-28: ACP 버그 수정, 로깅 무결성 확보, 쉘 입력 유출 차단](./MEMORY-2026-07-28.md)
 * [2026-07-29: Gemini ACP 통합, P0 응답 미수신 해결](./MEMORY-2026-07-29.md)
+* [2026-07-30: OpenCode ACP 통합, ConnectionMode 리팩토링, 3 에이전트 정상 동작 검증](./MEMORY-2026-07-30.md)
