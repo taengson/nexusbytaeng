@@ -24,7 +24,7 @@ class HomeScreen(Container):
             "btn-local": ConnectionMode.LOCAL,
             "btn-network": ConnectionMode.NETWORK,
             "btn-gemini": ConnectionMode.GEMINI_ACP,
-            "btn-opencode": ConnectionMode.OPENCODE,
+            "btn-opencode": ConnectionMode.OPENCODE_ACP,
             "btn-hermes": ConnectionMode.HERMES_ACP,
         }
         selected_mode = mode_map.get(btn_id)

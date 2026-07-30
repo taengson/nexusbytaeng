@@ -81,8 +81,8 @@ class SessionWorkspace(Container):
             # Use ACPClient for Gemini
             self.input_area = self.query_one(InputArea)
             self.input_area.can_focus = False
-            self.set_acp_status("✨ Gemini ACP 연결 중... (잠시만 기다려 주세요)", "#94a3b8")
-            self.add_system_message("🔄 Gemini ACP 연결 중...")
+            self.set_acp_status("✨ Gemini 연결 중...", "#94a3b8")
+            self.add_system_message("🔄 Gemini 연결 중...")
             
             try:
                 self.acp_client = ACPClient(
@@ -92,8 +92,26 @@ class SessionWorkspace(Container):
                 )
                 await self._connect_acp()
             except Exception as e:
-                self.set_acp_status(f"❌ Gemini ACP 연결 실패: {e}", "#ef4444")
-                self.add_system_message(f"❌ Gemini ACP 연결 실패: {e}\n홈 화면으로 돌아가거나 앱을 종료하십시오.")
+                self.set_acp_status(f"❌ Gemini 연결 실패: {e}", "#ef4444")
+                self.add_system_message(f"❌ Gemini 연결 실패: {e}\n홈 화면으로 돌아가거나 앱을 종료하십시오.")
+
+        elif self.current_mode == ConnectionMode.OPENCODE_ACP:
+            # Use ACPClient for OpenCode
+            self.input_area = self.query_one(InputArea)
+            self.input_area.can_focus = False
+            self.set_acp_status("💻 OpenCode 연결 중...", "#94a3b8")
+            self.add_system_message("🔄 OpenCode 연결 중...")
+            
+            try:
+                self.acp_client = ACPClient(
+                    command=["opencode", "acp"], 
+                    on_message=self._handle_acp_message,
+                    app_context=self.app
+                )
+                await self._connect_acp()
+            except Exception as e:
+                self.set_acp_status(f"❌ OpenCode 연결 실패: {e}", "#ef4444")
+                self.add_system_message(f"❌ OpenCode 연결 실패: {e}\n홈 화면으로 돌아가거나 앱을 종료하십시오.")
 
     async def _connect_acp(self):
         """Common ACP connection logic for Hermes and Gemini."""
@@ -178,7 +196,7 @@ class SessionWorkspace(Container):
 
     def on_input_result(self, message: InputResult):
         """Handles results from shell, commands, and suggestions routed via InputArea."""
-        if self.current_mode in (ConnectionMode.HERMES_ACP, ConnectionMode.GEMINI_ACP) and message.sender == "user" and not message.is_shell:
+        if self.current_mode in (ConnectionMode.HERMES_ACP, ConnectionMode.GEMINI_ACP, ConnectionMode.OPENCODE_ACP) and message.sender == "user" and not message.is_shell:
             # Flush remaining AI response buffer before starting new exchange
             if self._current_response_buffer:
                 self.logger.log_event("ai", "AI", self._current_response_buffer)
@@ -235,8 +253,8 @@ class SessionWorkspace(Container):
         mock_responses = {
             ConnectionMode.LOCAL: f"🤖 [로컬 AI 응답]\n입력하신 쿼리 '{user_text}' 분석 완료.",
             ConnectionMode.NETWORK: f"🌐 [네트워크 응답]\n에코 패킷 수신 성공: '{user_text}'",
-            ConnectionMode.GEMINI_ACP: f"✨ [Gemini ACP 응답]\n구문 해석 성공.",
-            ConnectionMode.OPENCODE: f"💻 [OpenCode 응답]\n프로젝트 컨텍스트 주입 완료."
+            ConnectionMode.GEMINI_ACP: f"✨ [Gemini 응답]\n구문 해석 성공.",
+            ConnectionMode.OPENCODE_ACP: f"💻 [OpenCode 응답]\n프로젝트 컨텍스트 주입 완료."
         }
         
         response_text = mock_responses.get(self.current_mode, "시뮬레이션 데이터 수신 오류.")

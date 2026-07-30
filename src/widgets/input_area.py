@@ -135,7 +135,7 @@ class InputArea(Container):
     def apply_mode_style(self, mode: str):
         """Updates the style classes, placeholder texts, and indicators of the input area."""
         # Clean current styling classes
-        for m in [ConnectionMode.LOCAL, ConnectionMode.NETWORK, ConnectionMode.GEMINI_ACP, ConnectionMode.OPENCODE]:
+        for m in [ConnectionMode.LOCAL, ConnectionMode.NETWORK, ConnectionMode.GEMINI_ACP, ConnectionMode.OPENCODE_ACP]:
             self.remove_class(f"input-mode-{m}")
             
         # Add new styling class corresponding to active mode
