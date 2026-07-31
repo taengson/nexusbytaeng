@@ -14,9 +14,9 @@ class HomeScreen(Container):
             
             yield Button("🤖 로컬 AI 연결", id="btn-local", classes="menu-button")
             yield Button("🌐 네트워크 연결", id="btn-network", classes="menu-button")
-            yield Button("✨ Gemini ACP 연결", id="btn-gemini", classes="menu-button")
+            yield Button("✨ Gemini 연결", id="btn-gemini", classes="menu-button")
             yield Button("💻 OpenCode 연결", id="btn-opencode", classes="menu-button")
-            yield Button("⚡ Hermes ACP 연결", id="btn-hermes", classes="menu-button")
+            yield Button("⚡ Hermes 연결", id="btn-hermes", classes="menu-button")
 
     def on_button_pressed(self, event: Button.Pressed):
         btn_id = event.button.id
