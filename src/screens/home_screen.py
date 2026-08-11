@@ -12,7 +12,6 @@ class HomeScreen(Container):
             yield Static("NEXUS BY TAENG", id="home-title")
             yield Static("AI-Network TUI Hybrid Workspace", id="home-subtitle")
             
-            yield Button("🤖 로컬 AI 연결", id="btn-local", classes="menu-button")
             yield Button("🌐 네트워크 연결", id="btn-network", classes="menu-button")
             yield Button("✨ Gemini 연결", id="btn-gemini", classes="menu-button")
             yield Button("💻 OpenCode 연결", id="btn-opencode", classes="menu-button")
@@ -21,7 +20,6 @@ class HomeScreen(Container):
     def on_button_pressed(self, event: Button.Pressed):
         btn_id = event.button.id
         mode_map = {
-            "btn-local": ConnectionMode.LOCAL,
             "btn-network": ConnectionMode.NETWORK,
             "btn-gemini": ConnectionMode.GEMINI_ACP,
             "btn-opencode": ConnectionMode.OPENCODE_ACP,

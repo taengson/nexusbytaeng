@@ -25,7 +25,7 @@ class InputArea(Container):
             super().__init__()
             self.mode = mode
 
-    def __init__(self, initial_mode: str = ConnectionMode.LOCAL, **kwargs):
+    def __init__(self, initial_mode: str = ConnectionMode.NETWORK, **kwargs):
         super().__init__(**kwargs)
         self.current_mode = initial_mode
         self.dispatcher = InputDispatcher()
@@ -55,7 +55,7 @@ class InputArea(Container):
         self.id = "input-container"
         yield Input(placeholder="메시지를 입력하세요...", id="input-field")
         yield Static("! shell mode", id="input-guide")
-        yield Static("현재 연결: 로컬 AI 연결", id="status-bar")
+        yield Static("현재 연결: 네트워크 연결", id="status-bar")
 
     def on_input_submitted(self, event: Input.Submitted):
         text = event.value
@@ -135,7 +135,7 @@ class InputArea(Container):
     def apply_mode_style(self, mode: str):
         """Updates the style classes, placeholder texts, and indicators of the input area."""
         # Clean current styling classes
-        for m in [ConnectionMode.LOCAL, ConnectionMode.NETWORK, ConnectionMode.GEMINI_ACP, ConnectionMode.OPENCODE_ACP]:
+        for m in [ConnectionMode.NETWORK, ConnectionMode.GEMINI_ACP, ConnectionMode.OPENCODE_ACP, ConnectionMode.HERMES_ACP]:
             self.remove_class(f"input-mode-{m}")
             
         # Add new styling class corresponding to active mode
