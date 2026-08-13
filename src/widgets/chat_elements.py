@@ -15,12 +15,11 @@ class MessageWidget(Container):
 
     def append_text(self, text: str):
         """Appends text to the internal static widget for streaming."""
+        self.text += text
         if self._text_static:
-            self._text_static.update(self._get_formatted_text(self.text + text))
-            self.text += text
-        else:
-            # If for some reason it's called before compose, just update the variable
-            self.text += text
+            self._text_static.update(self._get_formatted_text(self.text))
+        # If compose has not run yet, the variable is still updated and will
+        # be rendered when compose executes.
 
     def _get_formatted_text(self, text: str) -> str:
         if self.sender == "user":

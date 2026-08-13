@@ -27,9 +27,11 @@ class SuggestionPanel(Static):
             for s in suggestions:
                 self._list.append(ListItem(Label(s)))
         self.hidden = False
+        self.display = True
 
     def hide(self):
         self.hidden = True
+        self.display = False
 
     def get_selected(self) -> str | None:
         if self._list.index is not None:

@@ -1,3 +1,4 @@
+from typing import Callable
 from textual.app import App, ComposeResult
 from textual.screen import ModalScreen
 from textual.widgets import Label, Button
@@ -5,8 +6,8 @@ from textual.containers import Vertical
 
 class ConfirmationModal(ModalScreen):
     """A simple modal for confirming critical actions like Shell Mode transition."""
-    
-    def __init__(self, title: str, message: str, on_confirm: callable, **kwargs):
+
+    def __init__(self, title: str, message: str, on_confirm: Callable[[], None], **kwargs):
         super().__init__(**kwargs)
         self.title = title
         self.message = message

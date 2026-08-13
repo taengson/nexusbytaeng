@@ -13,7 +13,7 @@ class InputResult(Message):
     def __init__(self, text: str, sender: str = "ai", is_shell: bool = False):
         super().__init__()
         self.text = text
-        self.sender = sender  # 'user', 'ai', 'system'
+        self.sender = sender  # 'user', 'ai', 'system', 'thought'
         self.is_shell = is_shell
 
 class InputArea(Container):
@@ -56,6 +56,7 @@ class InputArea(Container):
         yield Input(placeholder="메시지를 입력하세요...", id="input-field")
         yield Static("! shell mode", id="input-guide")
         yield Static("현재 연결: 네트워크 연결", id="status-bar")
+        yield SuggestionPanel(id="suggestion-panel")
 
     def on_input_submitted(self, event: Input.Submitted):
         text = event.value
@@ -118,7 +119,13 @@ class InputArea(Container):
 
     def on_input_changed(self, event: Input.Changed):
         """Real-time suggestion trigger based on input prefix."""
-        pass
+        text = event.value
+        guide, suggestions = self.dispatcher.get_suggestions(text)
+        panel = self.query_one("#suggestion-panel", SuggestionPanel)
+        if guide:
+            panel.update_suggestions(guide, suggestions)
+        else:
+            panel.hide()
 
     def enter_shell_mode(self):
         self.dispatcher.mode = InputMode.SHELL

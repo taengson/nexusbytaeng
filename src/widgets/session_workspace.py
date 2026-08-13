@@ -68,7 +68,7 @@ class SessionWorkspace(Container):
             
             try:
                 self.acp_client = ACPClient(
-                    command=["hermes", "acp"], 
+                    command=["hermes", "acp"],
                     on_message=self._handle_acp_message,
                     app_context=self.app
                 )
@@ -76,6 +76,8 @@ class SessionWorkspace(Container):
             except Exception as e:
                 self.set_acp_status(f"❌ ACP 연결 실패: {e}", "#ef4444")
                 self.add_system_message(f"❌ ACP 연결 실패: {e}\n홈 화면으로 돌아가거나 앱을 종료하십시오.")
+                if self.input_area:
+                    self.input_area.can_focus = True
 
         elif self.current_mode == ConnectionMode.GEMINI_ACP:
             # Use ACPClient for Gemini
@@ -86,7 +88,7 @@ class SessionWorkspace(Container):
             
             try:
                 self.acp_client = ACPClient(
-                    command=["gemini", "--acp"], 
+                    command=["gemini", "--acp"],
                     on_message=self._handle_acp_message,
                     app_context=self.app
                 )
@@ -94,6 +96,8 @@ class SessionWorkspace(Container):
             except Exception as e:
                 self.set_acp_status(f"❌ Gemini 연결 실패: {e}", "#ef4444")
                 self.add_system_message(f"❌ Gemini 연결 실패: {e}\n홈 화면으로 돌아가거나 앱을 종료하십시오.")
+                if self.input_area:
+                    self.input_area.can_focus = True
 
         elif self.current_mode == ConnectionMode.OPENCODE_ACP:
             # Use ACPClient for OpenCode
@@ -104,7 +108,7 @@ class SessionWorkspace(Container):
             
             try:
                 self.acp_client = ACPClient(
-                    command=["opencode", "acp"], 
+                    command=["opencode", "acp"],
                     on_message=self._handle_acp_message,
                     app_context=self.app
                 )
@@ -112,13 +116,15 @@ class SessionWorkspace(Container):
             except Exception as e:
                 self.set_acp_status(f"❌ OpenCode 연결 실패: {e}", "#ef4444")
                 self.add_system_message(f"❌ OpenCode 연결 실패: {e}\n홈 화면으로 돌아가거나 앱을 종료하십시오.")
+                if self.input_area:
+                    self.input_area.can_focus = True
 
     async def _connect_acp(self):
-        """Common ACP connection logic for Hermes and Gemini."""
+        """Common ACP connection logic for Hermes, Gemini, and OpenCode."""
         await self.acp_client.start()
         await self.acp_client.initialize()
         resp = await self.acp_client.create_session(cwd=".")
-        
+
         if resp and "result" in resp:
             session_id = resp["result"].get("sessionId") or resp["result"].get("session_id")
             if session_id:
@@ -127,13 +133,14 @@ class SessionWorkspace(Container):
                 mode_symbol = "✨" if self.current_mode == ConnectionMode.GEMINI_ACP else "⚡"
                 self.set_acp_status(f"✅ ACP 연결됨 (ID: {session_id})", "#10b981")
                 self.add_system_message(f"✅ ACP 연결됨 (session: {session_id})")
-                self.input_area.can_focus = True
-            else:
-                self.set_acp_status("⚠️ ACP 세션 ID를 찾을 수 없습니다.", "#ef4444")
-                self.add_system_message("⚠️ ACP 세션 ID를 찾을 수 없습니다.")
-        else:
-            self.set_acp_status("⚠️ ACP 응답 비정상", "#ef4444")
-            self.add_system_message("⚠️ ACP 세션 생성 응답이 비정상적입니다.")
+                if self.input_area:
+                    self.input_area.can_focus = True
+                return
+        # If we reach here, session creation did not yield a usable session id.
+        self.set_acp_status("⚠️ ACP 세션 ID를 찾을 수 없습니다.", "#ef4444")
+        self.add_system_message("⚠️ ACP 세션 ID를 찾을 수 없습니다.")
+        if self.input_area:
+            self.input_area.can_focus = True
 
     def _finalize_ai_logging(self, token: int):
         """Logs the accumulated response buffer to the chat log.
@@ -143,6 +150,7 @@ class SessionWorkspace(Container):
         if self._current_response_buffer:
             self.logger.log_event("ai", "AI", self._current_response_buffer)
             self._current_response_buffer = ""
+            self.logger.flush()
         self._logging_timer = None
 
     def _handle_acp_message(self, data: Dict[str, Any]):
@@ -236,15 +244,8 @@ class SessionWorkspace(Container):
         self.add_system_message(f"🔔 연결 인스턴스가 {symbol} {display_name}(으)로 조절되었습니다.")
 
 
-    def on_input_submitted(self, event: Input.Submitted):
-        """Triggers upon pressing Enter inside the message input."""
-        # This is now fully handled by InputArea via global InputResult messages
-        # to ensure consistent ordering and prevent duplicate messages.
-        pass
-
-        
-        # Note: InputArea will handle the logic and post an InputResult message
-        # if it's a command or shell execution.
+    # Note: InputArea handles Submitted events and posts InputResult messages,
+    # so SessionWorkspace does not need its own on_input_submitted handler.
 
     async def generate_mock_response(self, user_text: str):
         """Asynchronously triggers simulated response cards."""

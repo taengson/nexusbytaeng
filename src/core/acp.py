@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, List, Optional, TypedDict, Union
+from typing import Any, Callable, Dict, List, NotRequired, Optional, TypedDict, Union
 import asyncio
 import json
 import logging
@@ -16,8 +16,8 @@ class ACPRequest(TypedDict):
 
 class ACPResponse(TypedDict):
     jsonrpc: str
-    result: Any
-    error: Optional[Dict[str, Any]]
+    result: NotRequired[Any]
+    error: NotRequired[Dict[str, Any]]
     id: int
 
 class ACPNotification(TypedDict):
@@ -69,7 +69,12 @@ class ACPClient:
         if self.process:
             try:
                 self.process.terminate()
-                await self.process.wait()
+                try:
+                    await asyncio.wait_for(self.process.wait(), timeout=5)
+                except asyncio.TimeoutError:
+                    logger.warning("ACP process did not terminate in time; forcing kill")
+                    self.process.kill()
+                    await self.process.wait()
             except Exception as e:
                 logger.error(f"Error stopping ACP process: {e}")
 
@@ -97,35 +102,41 @@ class ACPClient:
         except Exception as e:
             logger.error(f"Error in ACP listen loop: {e}")
 
-    async def _handle_notification(self, data: Dict[str, Any]):
-        """Routes notifications to the UI callback."""
-        # Use call_from_thread or similar if this were a sync callback, 
-        # but on_message is expected to handle the update logic.
+    def _route_to_ui(self, data: Dict[str, Any]):
+        """Thread-safe helper to schedule the UI callback on the Textual app loop."""
         if self.app and hasattr(self.app, "call_next"):
-            self.app.call_next(self.on_message, data)
+            # Textual's call_next expects a callable with no arguments;
+            # wrap the callback and its data in a closure.
+            self.app.call_next(lambda: self.on_message(data))
         else:
             # Fallback for non-Textual or simple async usage
             if asyncio.iscoroutinefunction(self.on_message):
-                await self.on_message(data)
+                asyncio.create_task(self.on_message(data))
             else:
                 self.on_message(data)
 
+    async def _handle_notification(self, data: Dict[str, Any]):
+        """Routes notifications to the UI callback."""
+        self._route_to_ui(data)
+
     async def _handle_response(self, data: Dict[str, Any]):
-        """Resolves the pending future for the matching request ID."""
+        """Resolves the pending future for the matching request ID.
+
+        Responses are delivered only to the original requester via the pending
+        Future. Notifications (messages without an id) are routed to on_message.
+        This avoids duplicate UI updates while still making response errors
+        visible when there is no waiter.
+        """
         req_id = data.get("id")
         if req_id in self._pending:
             future = self._pending.pop(req_id)
             if not future.done():
                 future.set_result(data)
-        
-        # Also route to on_message for general visibility if needed
-        if self.app and hasattr(self.app, "call_next"):
-            self.app.call_next(self.on_message, {"type": "response", "data": data})
-        else:
-            if asyncio.iscoroutinefunction(self.on_message):
-                await self.on_message({"type": "response", "data": data})
-            else:
-                self.on_message({"type": "response", "data": data})
+            return
+
+        # No pending waiter: surface the response (usually an error or stray
+        # message) to the UI so it is not silently dropped.
+        self._route_to_ui({"type": "response", "data": data})
 
     async def send_request(self, method: str, params: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Sends a JSON-RPC request and waits for the matching response."""

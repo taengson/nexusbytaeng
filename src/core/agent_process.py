@@ -1,4 +1,5 @@
 import asyncio
+import shlex
 import sys
 import os
 
@@ -10,8 +11,13 @@ class AgentProcessManager:
 
     async def start(self):
         env = {**os.environ, "PYTHONUNBUFFERED": "1"}
-        self.process = await asyncio.create_subprocess_shell(
-            self.command,
+        # Avoid create_subprocess_shell to prevent command injection when the
+        # command originates from external configuration. Split safely with shlex.
+        command_parts = shlex.split(self.command)
+        if not command_parts:
+            raise ValueError("Agent command is empty")
+        self.process = await asyncio.create_subprocess_exec(
+            *command_parts,
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,

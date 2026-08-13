@@ -39,10 +39,11 @@ class NexusApp(App):
         container.display = True
         
         workspaces = self.query_one("#workspaces", TabbedContent)
-        
-        tab_id = f"session-{workspaces.tab_count}"
+
+        tab_count = len(workspaces.query(TabPane))
+        tab_id = f"session-{tab_count}"
         title = ConnectionMode.get_display_name(mode)
-        
+
         workspaces.add_pane(TabPane(f"{title}", SessionWorkspace(mode), id=tab_id))
         workspaces.active = tab_id
 
