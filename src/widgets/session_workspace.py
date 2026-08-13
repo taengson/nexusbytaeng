@@ -15,7 +15,7 @@ from src.core.logger import ChatLogManager
 class SessionWorkspace(Container):
     """The workspace session widget, intended for mounting in tabs."""
     
-    def __init__(self, initial_mode: str = ConnectionMode.LOCAL, **kwargs):
+    def __init__(self, initial_mode: str = ConnectionMode.NETWORK, **kwargs):
         super().__init__(**kwargs)
         self.current_mode = initial_mode
         self.agent_manager = None
@@ -251,7 +251,6 @@ class SessionWorkspace(Container):
         await asyncio.sleep(0.3)
         
         mock_responses = {
-            ConnectionMode.LOCAL: f"🤖 [로컬 AI 응답]\n입력하신 쿼리 '{user_text}' 분석 완료.",
             ConnectionMode.NETWORK: f"🌐 [네트워크 응답]\n에코 패킷 수신 성공: '{user_text}'",
             ConnectionMode.GEMINI_ACP: f"✨ [Gemini 응답]\n구문 해석 성공.",
             ConnectionMode.OPENCODE_ACP: f"💻 [OpenCode 응답]\n프로젝트 컨텍스트 주입 완료."
