@@ -18,8 +18,8 @@ pip install textual litellm
 
 ### Execution
 ```bash
-# Run the application
-python3 -m src.main
+# Run the application (always use the venv Python in package mode)
+./venv/bin/python -m src.main
 ```
 
 ---
@@ -34,10 +34,10 @@ python3 -m src.main
 ## 2. Key Features
 
 ### 🤖 ACP (Agent Client Protocol) Support
-- **Multi-Agent Integration**: Support for multiple ACP-compatible agents (Hermes, Gemini).
+- **Multi-Agent Integration**: Support for multiple ACP-compatible agents (Hermes, Gemini, OpenCode).
 - **Real-time Streaming**: Streaming AI responses with Thought/Response visual separation.
 - **Session Management**: ACP-based session creation, prompt transmission, and notification handling.
-- **Shell Integration**: Shell command execution (`!` prefix) with input visibility and logging.
+- **Shell Integration**: Safe shell command execution (`!` prefix) using `shlex.split` + `shell=False`, with input visibility and logging.
 
 ### 🎨 Modernized UI/UX
 - **Hierarchical Layout**: 
@@ -71,7 +71,7 @@ python3 -m src.main
 - **Framework**: `textual`
 - **Protocol**: ACP (Agent Client Protocol) via JSON-RPC 2.0
 - **Styling**: `.tcss` stylesheets.
-- **Supported Agents**: Hermes ACP, Gemini ACP
+- **Supported Agents**: Hermes ACP, Gemini ACP, OpenCode ACP
 
 ---
 
@@ -87,13 +87,16 @@ python3 -m src.main
 - [x] Build role-specific message widgets and `SessionWorkspace` (Tree + Chat).
 - [x] Toad-style input system (`!`, `/`, `@` prefix parsing).
 
-### Phase 3: ACP Integration & UI/UX Polishing
+### Phase 3: ACP Integration, UI/UX Polishing & Security/Stability Hardening
 - [x] ACP (Agent Client Protocol) integration via JSON-RPC 2.0.
 - [x] Hermes ACP support (handshake, session, streaming).
 - [x] Gemini ACP support (Phase 3.8).
+- [x] OpenCode ACP support (Phase 3.9).
 - [x] UI/UX polishing (message stack, Think/Response separation, ACP status bar).
-- [x] Logging integrity (token-based timer, buffer flush, session mode logging).
-- [x] Shell input leak prevention and command visibility.
+- [x] Logging integrity (token-based timer, buffer flush, session mode logging, buffered I/O).
+- [x] Shell input leak prevention, command visibility, and command-injection-safe execution.
+- [x] Live path/file suggestions (`@` prefix) via `InputDispatcher` + `SuggestionPanel`.
+- [x] Codebase audit remediation (thread-safe `call_next`, ACP process stop timeout, response deduplication, TypedDict fixes, dynamic project tree, data-driven home screen buttons).
 
 ### Phase 4: LLM Client & Network (WebSocket) Integration
 - [ ] Multi-provider LLM support via `AgentRegistry` and `litellm`.

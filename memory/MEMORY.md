@@ -57,6 +57,14 @@
   - Toad 패턴 참조: 에이전트 설정 파일 기반 명령어 실행.
   - P0 해결: 3 에이전트 (Gemini, OpenCode, Hermes) 모두 정상 연결 및 응답 검증.
   - 변경 파일: `state.py`, `session_workspace.py`, `input_area.py`, `home_screen.py` (4 파일, ~22 줄).
+- [x] **Phase 3.10: 코드베이스 감사 및 보안/안정성 개선** (완료 - 2026-08-13) [[MEMORY-2026-08-13]]
+  - `git pull` 충돌 해결: tracked `__pycache__` 제거.
+  - 보안: `shell=True` 사용 제거 → `shlex.split` + `shell=False` / `create_subprocess_exec` 적용.
+  - ACP 안정성: `call_next` 람다 래핑, `stop()` 타임아웃 후 강제 종료, response 중복 라우팅 제거.
+  - UI 복구: ACP 연결 실패 시 `input_area.can_focus = True` 복원.
+  - 실시간 제안: `@` 접두사 파일/경로 제안 구현 및 `SuggestionPanel` 연동.
+  - 로깅: 파일 I/O 버퍼링, `flush()` 인터페이스 추가.
+  - 코드 정제: `TypedDict NotRequired`, `ProjectTree` 동적 경로, `TabbedContent.tab_count` API 교체, `home_screen` 데이터 기반 버튼 생성.
 - [ ] **Phase 4: LLM Client & Network (WebSocket) Integration** (대기) [[MEMORY-2026-07-21]]
   - Multi-provider LLM을 지원하는 `AgentRegistry` 구현 및 `litellm` 연동.
   - 비동기 백기그라운드 태스크 기반 WebSocket 브로커 서버 및 네트워크 패널 완성.
@@ -67,16 +75,16 @@
 
 | 컴포넌트명 | 관련 파일 경로 | 현재 구현 상태 | 비고/제약 사항 |
 | :--- | :--- | :--- | :--- |
-| **Main Entry** | `src/main.py` | [완성] 메인 앱 루프 및 스크린 라우팅 | `HomeScreen` ↔️ `#workspace-container` 토글 처리 [[MEMORY-2026-07-15]] |
-| **Home Screen** | `src/screens/home_screen.py` | [완성] 4개 AI/Network 연결 진입 허브 | 복귀 시 세션 작업 영역 자동 숨김 보장 [[MEMORY-2026-07-15]] |
-| **Project Tree** | `src/widgets/project_tree.py` | [완성] 워크스페이스 내 프로젝트 소스 트리 | 탭 활성화 시에만 노출되도록 격리 [[MEMORY-2026-07-16]] |
-| **Input Engine** | `src/core/input_engine.py` | [진행] `InputDispatcher` 등 파싱/검증 로직 | 실시간 `get_suggestions(text)` 제안 기능 고도화 필요 [[MEMORY-2026-07-16]], [[MEMORY-2026-07-20]] |
-| **Input Area** | `src/widgets/input_area.py` | [진행] 모드별 테마 및 제안 패널 연동 UI | `on_change` 이벤트 연동 및 `.shell-bubble` 적용 대기 [[MEMORY-2026-07-20]] |
-| **Suggestion UI**| `src/widgets/suggestions.py` | [진행] 추천 키워드 리스트 뷰 패널 | 패널 상단 안내 가이드 `Label` 추가 대기 [[MEMORY-2026-07-16]] |
+| **Main Entry** | `src/main.py` | [완성] 메인 앱 루프 및 스크린 라우팅 | `TabbedContent` 탭 개수를 `query(TabPane)`로 안전하게 계산 [[MEMORY-2026-08-13]] |
+| **Home Screen** | `src/screens/home_screen.py` | [완성] 4개 AI/Network 연결 진입 허브 | `HOME_BUTTONS` 데이터 기반 버튼 생성으로 `ConnectionMode`와 순서/아이콘 동기화 [[MEMORY-2026-08-13]] |
+| **Project Tree** | `src/widgets/project_tree.py` | [완성] 워크스페이스 내 프로젝트 소스 트리 | 동적 `update_path()` 지원, 초기 `os.getcwd()` 기본값 유지 [[MEMORY-2026-08-13]] |
+| **Input Engine** | `src/core/input_engine.py` | [완성] `InputDispatcher` 파싱/검증 및 실시간 제안 | `shlex.split` 기반 안전한 쉘 실행, `@` 접두사 파일/경로 제안 구현 완료 [[MEMORY-2026-08-13]] |
+| **Input Area** | `src/widgets/input_area.py` | [완성] 모드별 테마 및 제안 패널 연동 UI | `on_change` 이벤트로 `SuggestionPanel` 실시간 업데이트 연동 완료 [[MEMORY-2026-08-13]] |
+| **Suggestion UI**| `src/widgets/suggestions.py` | [완성] 추천 키워드 리스트 뷰 패널 | 상단 안내 가이드 `Label` 포함, `hidden`/`display` 속성 통일 [[MEMORY-2026-08-13]] |
 | **Global Style** | `src/styles/nexus.tcss` | [진행] 다크 다이얼 테마 및 카드 메시지 버블 | 모달 창 컷팅 현상 방지 및 모드별 색상 튜닝 중 [[MEMORY-2026-07-20]] |
 | **Global State** | `src/core/state.py` | [완성] 모드 및 액티브 세션 상태 제어 | `HERMES_ACP`, `GEMINI_ACP`, `OPENCODE_ACP` 상수 추가, `get_display_name()` 으로 사용자 친화적 이름 표시 [[MEMORY-2026-07-27]], [[MEMORY-2026-07-29]], [[MEMORY-2026-07-30]] |
-| **ACP Client** | `src/core/acp.py` | [완성] JSON-RPC 2.0 통신, 핸드셰이크, 스트리밍 | `call_next` 기반 UI 스레드 브리징, Future 기반 응답 매칭 [[MEMORY-2026-07-23]], [[MEMORY-2026-07-27]] |
-| **Chat Logger** | `src/core/logger.py` | [완성] 일별 Markdown 로그 기록 | P1로 AI 응답 로깅 완결 (2초 타임아웃 플러시) [[MEMORY-2026-07-27]] |
+| **ACP Client** | `src/core/acp.py` | [완성] JSON-RPC 2.0 통신, 핸드셰이크, 스트리밍 | `call_next` 람다 래핑, `stop()` 5초 타임아웃 후 강제 종료, response 중복 라우팅 제거 [[MEMORY-2026-08-13]] |
+| **Chat Logger** | `src/core/logger.py` | [완성] 일별 Markdown 로그 기록 | 버퍼 기반 쓰기 + 명시적 `flush()`, P1 AI 응답 로깅 완결 [[MEMORY-2026-08-13]] |
 | **Stream Parser** | `src/core/stream_parser.py` | [완성] Raw pipe용 줄 단위 메시지 파싱 | ACP 모드에서는 미사용, Raw pipe 모드 전용 [[MEMORY-2026-07-27]] |
 | **Session Workspace** | `src/widgets/session_workspace.py` | [완성] 메시지 스택, Think 분리, 연결 상태 바, 로깅, 쉘 유출 차단, **OpenCode ACP 연결** | `_active_ai_widget` 기반 위젯 추적, `#acp-status-bar` 상태 표시, 토큰 기반 타이머 무효화, is_shell 체크, **OPENCODE_ACP 분기 추가** [[MEMORY-2026-07-27]], [[MEMORY-2026-07-28]], [[MEMORY-2026-07-29]], [[MEMORY-2026-07-30]] |
 
@@ -89,10 +97,16 @@
    - 항상 레이아웃 컨테이너를 한 번만 렌더링한 후, CSS `.hidden` 클래스 추가/제거 또는 `display: none/block` 처리를 통해 토글하십시오.
 2. **사이드바 중복 금지**:
    - `NexusApp` 레벨의 전역 임시 사이드바를 절대 만들지 마십시오. 소스 트리 사이드바는 오직 `SessionWorkspace` 내부의 `ProjectTreePanel`로만 제한적으로 표현되어야 합니다.
-3. **엄격한 패키지 모드 실행**:
-   - 프로젝트는 항상 상위 디렉토리에서 패키지 모드인 `python3 -m src.main`으로 실행되어야 컴포넌트 간 상대 임포트가 깨지지 않습니다. `python src/main.py` 단독 실행을 금지합니다.
+3. **엄격한 패키지 모드 실행 (venv 권장)**:
+   - 프로젝트는 항상 가상 환경(venv)의 Python을 사용하고, 상위 디렉토리에서 패키지 모드인 `./venv/bin/python -m src.main`으로 실행되어야 컴포넌트 간 상대 임포트가 깨지지 않습니다. `python src/main.py` 단독 실행을 금지합니다.
 4. **네트워크 호출 타임아웃 보장**:
    - WebSocket 및 LLM 통신 시 메인 TUI 스레드가 얼지 않도록 항상 비동기(Async Task) 또는 쓰레드 풀을 활용하고, 명확한 `timeout` 설정을 적용해야 합니다.
+5. **쉘 명령어 실행 보안 (핵심)**:
+   - 외부/사용자 입력이 포함된 모든 쉘 호출은 `shell=True`를 사용하지 말고, `shlex.split` 후 `subprocess.run(..., shell=False)` 또는 `asyncio.create_subprocess_exec`를 사용하여 명령어 인젝션을 방지하십시오.
+6. **ACP 프로세스 생명주기 관리**:
+   - ACP 에이전트 프로세스를 종료할 때 `terminate()` 후 `asyncio.wait_for(process.wait(), timeout=...)`로 타임아웃을 두고, 응답이 없으면 `kill()`로 강제 종료하십시오. 무한 대기는 메인 TUI 스레드를 얼릴 수 있습니다.
+7. **UI 스레드 안전성**:
+   - Textual의 `call_next`는 인자 없는 callable만 받습니다. UI 콜백에 데이터를 전달할 때는 반드시 `lambda: callback(data)` 형태로 래핑하십시오.
 
 ---
 
@@ -154,3 +168,5 @@ AI 에이전트는 작업을 할당받을 때마다 아래의 **5단계 라이�
 * [2026-07-28: ACP 버그 수정, 로깅 무결성 확보, 쉘 입력 유출 차단](./MEMORY-2026-07-28.md)
 * [2026-07-29: Gemini ACP 통합, P0 응답 미수신 해결](./MEMORY-2026-07-29.md)
 * [2026-07-30: OpenCode ACP 통합, ConnectionMode 리팩토링, 3 에이전트 정상 동작 검증](./MEMORY-2026-07-30.md)
+* [2026-08-11: 불필요한 '로컬 AI 연결' 항목 제거 및 코드 정제](./MEMORY-2026-08-11.md)
+* [2026-08-13: `git pull` 충돌 해결, 코드베이스 감사, Critical/High/Medium 이슈 수정 및 문서화](./MEMORY-2026-08-13.md)
