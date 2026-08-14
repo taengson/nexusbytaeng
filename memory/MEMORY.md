@@ -65,9 +65,23 @@
   - 실시간 제안: `@` 접두사 파일/경로 제안 구현 및 `SuggestionPanel` 연동.
   - 로깅: 파일 I/O 버퍼링, `flush()` 인터페이스 추가.
   - 코드 정제: `TypedDict NotRequired`, `ProjectTree` 동적 경로, `TabbedContent.tab_count` API 교체, `home_screen` 데이터 기반 버튼 생성.
-- [ ] **Phase 4: LLM Client & Network (WebSocket) Integration** (대기) [[MEMORY-2026-07-21]]
-  - Multi-provider LLM을 지원하는 `AgentRegistry` 구현 및 `litellm` 연동.
-  - 비동기 백기그라운드 태스크 기반 WebSocket 브로커 서버 및 네트워크 패널 완성.
+- [x] **Phase 4: ACP Enhancement & Agent Stability** (완료 - 2026-08-13) [[MEMORY-2026-08-13]]
+  - ACP protocol 강화: 재연결, 세션 지속성, 스트리밍 최적화.
+  - 3 에이전트 (Hermes, Gemini, OpenCode) 안정성 확보.
+  - 에러 처리 및 복구 로직 고도화.
+- [ ] **Phase 5: A2A Client Integration** (대기)
+  - A2A (Agent2Agent Protocol) 클라이언트 구현.
+  - 외부 A2A 에이전트 발견 (AgentCard discovery via `/.well-known/agent.json`).
+  - Task lifecycle 기반 메시지 흐름 (`submitted → working → completed`).
+  - `nexusbytaeng`를 A2A 클라이언트로 활용하여 외부 에이전트와 협업.
+- [ ] **Phase 6: ANP / DID Federation** (대기)
+  - ANP (Agent Network Protocol) 기반 연합 실험.
+  - W3C DID 기반 에이전트 정체성 탐구.
+  - 메타-프로토콜 협상 개념 검토 및 적용 방안 수립.
+- [ ] **Phase 7: Polish & Stability** (대기)
+  - 애니메이션 및 전환 효과 다듬기.
+  - 다중 에이전트 컨텍스트 스위칭 스트레스 테스트.
+  - 문서화 및 설정 예시 최종 정리.
 
 ---
 

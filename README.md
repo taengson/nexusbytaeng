@@ -98,11 +98,23 @@ pip install textual litellm
 - [x] Live path/file suggestions (`@` prefix) via `InputDispatcher` + `SuggestionPanel`.
 - [x] Codebase audit remediation (thread-safe `call_next`, ACP process stop timeout, response deduplication, TypedDict fixes, dynamic project tree, data-driven home screen buttons).
 
-### Phase 4: LLM Client & Network (WebSocket) Integration
-- [ ] Multi-provider LLM support via `AgentRegistry` and `litellm`.
-- [ ] Async WebSocket broker server and network panel.
+### Phase 4: ACP Enhancement & Agent Stability
+- [x] ACP protocol 강화: 재연결, 세션 지속성, 스트리밍 최적화
+- [x] 3 에이전트 (Hermes, Gemini, OpenCode) 안정성 확보
+- [x] 에러 처리 및 복구 로직 고도화
 
-### Phase 5: Polish & Stability
+### Phase 5: A2A Client Integration
+- [ ] A2A (Agent2Agent Protocol) 클라이언트 구현.
+- [ ] 외부 A2A 에이전트 발견 (AgentCard discovery via `/.well-known/agent.json`).
+- [ ] Task lifecycle 기반 메시지 흐름 (`submitted → working → completed`).
+- [ ] `nexusbytaeng`를 A2A 클라이언트로 활용하여 외부 에이전트와 협업.
+
+### Phase 6: ANP / DID Federation
+- [ ] ANP (Agent Network Protocol) 기반 연합 실험.
+- [ ] W3C DID 기반 에이전트 정체성 탐구.
+- [ ] 메타-프로토콜 협상 개념 검토 및 적용 방안 수립.
+
+### Phase 7: Polish & Stability
 - [ ] Refine animations and transitions.
 - [ ] Stress test multi-agent context switching.
 - [ ] Finalize documentation and configuration examples.
