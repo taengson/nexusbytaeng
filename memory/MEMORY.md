@@ -184,3 +184,10 @@ AI 에이전트는 작업을 할당받을 때마다 아래의 **5단계 라이�
 * [2026-07-30: OpenCode ACP 통합, ConnectionMode 리팩토링, 3 에이전트 정상 동작 검증](./MEMORY-2026-07-30.md)
 * [2026-08-11: 불필요한 '로컬 AI 연결' 항목 제거 및 코드 정제](./MEMORY-2026-08-11.md)
 * [2026-08-13: `git pull` 충돌 해결, 코드베이스 감사, Critical/High/Medium 이슈 수정 및 문서화](./MEMORY-2026-08-13.md)
+
+## 🛑 Project Concluded
+This project (`nexusbytaeng`) has been concluded. 
+The ACP model selection feature was abandoned due to ACP connection issues, 
+and the roadmap was redefined from ACP → A2A → ANP.
+
+For final details, see [MEMORY-2026-08-14](../MEMORY-2026-08-14.md).

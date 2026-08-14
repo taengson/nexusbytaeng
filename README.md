@@ -124,3 +124,12 @@ pip install textual litellm
 ## 5. License & Guidelines
 - **Design Philosophy**: Reference-based implementation of UX/UI patterns to ensure license safety.
 - **Code Quality**: Maintain strict separation between UI and business logic.
+
+---
+
+## 🛑 Project Concluded
+This project (`nexusbytaeng`) has been concluded. 
+The ACP model selection feature was abandoned due to ACP connection issues, 
+and the roadmap was redefined from ACP → A2A → ANP.
+
+For final details, see [MEMORY-2026-08-14](./memory/MEMORY-2026-08-14.md).
